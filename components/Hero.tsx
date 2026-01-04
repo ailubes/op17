@@ -24,7 +24,7 @@ export const Hero: React.FC = () => {
             Ukrainian Thunder
           </span>
           <h1 className="font-bebas text-[80px] md:text-[140px] leading-[0.9] uppercase mb-10">
-            <span className="block animate-slideUp">The Be<span className="relative inline-block"><img src="/images/volleyball-ball-svgrepo-com.svg" alt="" className="absolute -top-[0.7em] left-1/2 -translate-x-1/2 w-[0.55em] h-[0.55em] drop-shadow-[0_0_15px_rgba(255,213,0,0.9)]" />a</span>st</span>
+            <span className="block animate-slideUp">The Be<span className="relative inline-block"><img src="/images/volleyball-ball-svgrepo-com.svg" alt="" className="hidden md:block absolute -top-[0.7em] left-1/2 -translate-x-1/2 w-[0.55em] h-[0.55em] drop-shadow-[0_0_15px_rgba(255,213,0,0.9)]" />a</span>st</span>
             <span className="block outline-text animate-slideUp delay-200">From</span>
             <span className="block text-gold animate-slideUp delay-400">Ukraine</span>
           </h1>
