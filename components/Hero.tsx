@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 export const Hero: React.FC = () => {
   return (
@@ -30,7 +30,7 @@ export const Hero: React.FC = () => {
           </h1>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 mt-10 animate-fadeIn delay-500">
             <Link
-              to="/shop"
+              href="/shop"
               className="px-8 py-4 bg-gold text-slate-950 font-barlow font-extrabold uppercase tracking-wider clip-btn hover:bg-white hover:scale-105 transition-all shadow-xl inline-block"
             >
               Explore Collection

@@ -1,6 +1,8 @@
 
+"use client";
+
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -15,9 +17,14 @@ export const Navbar: React.FC = () => {
 
   return (
     <nav className={`fixed top-0 left-0 w-full px-6 md:px-14 py-6 z-[1000] transition-all duration-300 flex justify-between items-center ${scrolled ? 'bg-slate-950/90 backdrop-blur-md shadow-2xl py-4' : 'bg-transparent'}`}>
-      <a href="#" className="font-bebas text-3xl tracking-widest text-white flex items-center gap-2 group">
-        OP<span className="text-gold group-hover:scale-110 transition-transform">17</span>
-      </a>
+      <Link href="/" className="font-bebas text-3xl tracking-widest text-white flex items-center gap-2 group">
+        <img
+          src="/images/logos/op17-golden-logo.png"
+          alt="Oleh Plotnytskyi OP17 logo"
+          className="h-10 md:h-12 w-auto transition-transform group-hover:scale-105"
+        />
+        <span className="sr-only">OP17</span>
+      </Link>
 
       <div className="hidden lg:flex gap-10">
         {[
@@ -37,7 +44,7 @@ export const Navbar: React.FC = () => {
           </a>
         ))}
         <Link
-          to="/shop"
+          href="/shop"
           className="font-barlow font-semibold text-sm uppercase tracking-[0.15em] text-gold hover:text-white transition-colors relative group"
         >
           Shop
@@ -46,7 +53,7 @@ export const Navbar: React.FC = () => {
       </div>
 
       <div>
-        <Link to="/shop" className="font-barlow font-bold text-gold uppercase tracking-wider hover:text-white transition-colors">
+        <Link href="/shop" className="font-barlow font-bold text-gold uppercase tracking-wider hover:text-white transition-colors">
           Shop Now
         </Link>
       </div>
