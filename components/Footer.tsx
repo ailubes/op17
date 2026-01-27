@@ -1,5 +1,6 @@
 
 import React from 'react';
+import Link from 'next/link';
 
 export const Footer: React.FC = () => {
   return (
@@ -7,9 +8,14 @@ export const Footer: React.FC = () => {
       <div className="container mx-auto px-6 md:px-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-24">
           <div className="lg:col-span-2">
-            <a href="#" className="font-bebas text-5xl tracking-widest text-white mb-8 block">
-              OP<span className="text-gold">17</span>
-            </a>
+            <Link href="/" className="mb-8 inline-flex items-center gap-3 group">
+              <img
+                src="/images/logos/blue-yellow.png"
+                alt="Oleh Plotnytskyi OP17 logo"
+                className="h-12 md:h-14 w-auto transition-transform group-hover:scale-105"
+              />
+              <span className="sr-only">OP17</span>
+            </Link>
             <p className="text-slate-400 max-w-md mb-10 text-lg leading-relaxed">
               The official digital home of Oleh Plotnytskyi. 
               Celebrating excellence in volleyball and the indomitable spirit of the Ukrainian people.

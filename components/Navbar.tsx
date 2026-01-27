@@ -19,7 +19,7 @@ export const Navbar: React.FC = () => {
     <nav className={`fixed top-0 left-0 w-full px-6 md:px-14 py-6 z-[1000] transition-all duration-300 flex justify-between items-center ${scrolled ? 'bg-slate-950/90 backdrop-blur-md shadow-2xl py-4' : 'bg-transparent'}`}>
       <Link href="/" className="font-bebas text-3xl tracking-widest text-white flex items-center gap-2 group">
         <img
-          src="/images/logos/op17-golden-logo.png"
+          src="/images/logos/golden.png"
           alt="Oleh Plotnytskyi OP17 logo"
           className="h-10 md:h-12 w-auto transition-transform group-hover:scale-105"
         />
