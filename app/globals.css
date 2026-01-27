@@ -31,6 +31,19 @@
   color: transparent;
 }
 
+html:lang(uk) .font-bebas {
+  font-family: "Oswald", "Barlow Condensed", sans-serif;
+  letter-spacing: 0.04em;
+}
+
+html:lang(uk) .font-barlow {
+  font-family: "Roboto Condensed", "Barlow Condensed", sans-serif;
+}
+
+html:lang(uk) .outline-text {
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.7);
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

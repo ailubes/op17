@@ -22,6 +22,12 @@ enum Currency {
   UAH
 }
 
+enum Locale {
+  en
+  uk
+  it
+}
+
 enum CollectionStatus {
   UPCOMING
   LIVE
@@ -140,6 +146,7 @@ model Category {
   sortOrder Int        @default(0)
   isActive  Boolean    @default(true)
   products  Product[]
+  translations CategoryTranslation[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 }
@@ -156,6 +163,7 @@ model Collection {
   isVisible       Boolean          @default(true)
   backorderPolicy BackorderPolicy  @default(DISALLOW)
   products        Product[]
+  translations    CollectionTranslation[]
   media           Media[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -180,6 +188,7 @@ model Product {
   variants        Variant[]
   media           Media[]
   attributes      ProductAttribute[]
+  translations    ProductTranslation[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
@@ -212,6 +221,50 @@ model ProductAttribute {
   createdAt DateTime @default(now())
 
   @@index([key, value])
+}
+
+model CategoryTranslation {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  locale     Locale
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([categoryId, locale])
+  @@index([locale])
+}
+
+model CollectionTranslation {
+  id           String     @id @default(cuid())
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id])
+  locale       Locale
+  name         String
+  description  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([collectionId, locale])
+  @@index([locale])
+}
+
+model ProductTranslation {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  locale      Locale
+  name        String
+  description String?
+  type        String?
+  gender      String?
+  sport       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([productId, locale])
+  @@index([locale])
 }
 
 model Media {

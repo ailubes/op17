@@ -31,6 +31,14 @@ type Product = {
   collection?: { id: string; name: string } | null;
   category?: { id: string; name: string } | null;
   variants?: { id: string }[];
+  media?: {
+    id: string;
+    objectKey: string;
+    bucket: string;
+    url?: string | null;
+    alt?: string | null;
+    sortOrder?: number | null;
+  }[];
 };
 
 const emptyForm = {
@@ -56,6 +64,8 @@ export default function AdminProducts() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
 
   const loadData = async () => {
     setLoading(true);
@@ -135,6 +145,93 @@ export default function AdminProducts() {
 
     resetForm();
     loadData();
+  };
+
+  const clearUploadError = (productId: string) => {
+    setUploadErrors((prev) => {
+      if (!prev[productId]) return prev;
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
+  };
+
+  const setUploadError = (productId: string, message: string) => {
+    setUploadErrors((prev) => ({ ...prev, [productId]: message }));
+  };
+
+  const uploadProductFiles = async (productId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    clearUploadError(productId);
+    setUploadingId(productId);
+
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) {
+          setUploadError(productId, "Only image uploads are supported.");
+          continue;
+        }
+
+        const presignRes = await fetch("/api/admin/media/presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            entityType: "product",
+            entityId: productId,
+            fileName: file.name,
+            contentType: file.type,
+          }),
+        });
+
+        if (!presignRes.ok) {
+          const data = await presignRes.json().catch(() => null);
+          throw new Error(data?.error || "Failed to prepare upload.");
+        }
+
+        const { uploadUrl, objectKey, bucket } = await presignRes.json();
+
+        const uploadRes = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error("Upload failed.");
+        }
+
+        const createRes = await fetch("/api/admin/media", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            entityType: "product",
+            entityId: productId,
+            objectKey,
+            bucket,
+            mimeType: file.type,
+          }),
+        });
+
+        if (!createRes.ok) {
+          const data = await createRes.json().catch(() => null);
+          throw new Error(data?.error || "Failed to save media.");
+        }
+      }
+    } catch (uploadError) {
+      setUploadError(productId, (uploadError as Error).message);
+    } finally {
+      setUploadingId((current) => (current === productId ? null : current));
+      loadData();
+    }
+  };
+
+  const removeMedia = async (mediaId: string, productId: string) => {
+    if (!confirm("Remove this image?")) return;
+    await fetch(`/api/admin/media/${mediaId}`, { method: "DELETE", credentials: "include" });
+    loadData();
+    clearUploadError(productId);
   };
 
   const removeProduct = async (id: string) => {
@@ -315,32 +412,88 @@ export default function AdminProducts() {
             {products.map((product) => (
               <div
                 key={product.id}
-                className="border border-white/10 bg-slate-900/40 p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+                className="border border-white/10 bg-slate-900/40 p-4 flex flex-col gap-4"
               >
-                <div>
-                  <h3 className="font-bebas text-xl">{product.name}</h3>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{product.slug}</p>
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
-                    <span>EUR {product.basePriceEur}</span>
-                    <span>•</span>
-                    <span>{product.collection?.name || "Always-on"}</span>
-                    <span>•</span>
-                    <span>{product.variants?.length ?? 0} variants</span>
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h3 className="font-bebas text-xl">{product.name}</h3>
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{product.slug}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
+                      <span>EUR {product.basePriceEur}</span>
+                      <span>•</span>
+                      <span>{product.collection?.name || "Always-on"}</span>
+                      <span>•</span>
+                      <span>{product.variants?.length ?? 0} variants</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleEdit(product)}
+                      className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-gold"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => removeProduct(product.id)}
+                      className="px-4 py-2 border border-red-500/40 text-xs uppercase tracking-[0.2em] text-red-300 hover:border-red-400"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handleEdit(product)}
-                    className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-gold"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => removeProduct(product.id)}
-                    className="px-4 py-2 border border-red-500/40 text-xs uppercase tracking-[0.2em] text-red-300 hover:border-red-400"
-                  >
-                    Delete
-                  </button>
+
+                <div className="border-t border-white/10 pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-xs uppercase tracking-[0.2em] text-slate-500">Images</span>
+                    <label className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] text-slate-200 hover:border-gold cursor-pointer">
+                      {uploadingId === product.id ? "Uploading..." : "Upload Images"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        disabled={uploadingId === product.id}
+                        onChange={(event) => {
+                          const files = event.currentTarget.files;
+                          event.currentTarget.value = "";
+                          uploadProductFiles(product.id, files);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {uploadErrors[product.id] && (
+                    <p className="mt-3 text-xs text-red-400">{uploadErrors[product.id]}</p>
+                  )}
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {product.media && product.media.length > 0 ? (
+                      product.media.map((media) => (
+                        <div
+                          key={media.id}
+                          className="relative h-20 w-20 overflow-hidden border border-white/10 bg-slate-950"
+                        >
+                          {media.url ? (
+                            <img
+                              src={media.url}
+                              alt={media.alt || product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-[10px] text-slate-500">
+                              No preview
+                            </div>
+                          )}
+                          <button
+                            onClick={() => removeMedia(media.id, product.id)}
+                            className="absolute top-1 right-1 bg-slate-950/80 text-white text-[10px] px-1 py-0.5 border border-white/10 hover:border-red-400"
+                          >
+                            x
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-slate-500">No images yet.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

@@ -1,6 +1,8 @@
-import './globals.css';
-import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import "./globals.css";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import { cookies } from "next/headers";
+import { DEFAULT_LOCALE, LOCALE_COOKIE, normalizeLocale } from "@/lib/locale";
 
 export const metadata: Metadata = {
   title: 'Oleh Plotnytskyi | Ukrainian Thunder',
@@ -9,13 +11,17 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const cookieStore = cookies();
+  const cookieValue = cookieStore.get(LOCALE_COOKIE)?.value;
+  const locale = normalizeLocale(cookieValue) || DEFAULT_LOCALE;
+
   return (
-    <html lang="en">
+    <html lang={locale} data-locale={locale}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Bebas+Neue&family=Inter:wght@300;400;600&family=Oswald:wght@400;500;600;700&family=Roboto+Condensed:wght@400;700&display=swap"
           rel="stylesheet"
         />
       </head>

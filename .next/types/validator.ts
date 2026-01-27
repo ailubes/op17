@@ -191,6 +191,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/api/admin/media/[id]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/admin/media/[id]">> = Specific
+  const handler = {} as typeof import("../../app/api/admin/media/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/admin/media/presign/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/admin/media/presign">> = Specific
+  const handler = {} as typeof import("../../app/api/admin/media/presign/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/admin/media/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/admin/media">> = Specific
+  const handler = {} as typeof import("../../app/api/admin/media/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/api/admin/orders/[id]/notes/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/admin/orders/[id]/notes">> = Specific

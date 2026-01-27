@@ -1,8 +1,13 @@
 
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
+import type { HomeMessages } from "@/lib/i18n";
 
-export const Hero: React.FC = () => {
+type HeroProps = {
+  copy: HomeMessages["hero"];
+};
+
+export const Hero: React.FC<HeroProps> = ({ copy }) => {
   return (
     <section className="relative h-screen flex items-center overflow-hidden pt-20 bg-slate-950">
       {/* Background Subtle Texture */}
@@ -21,22 +26,31 @@ export const Hero: React.FC = () => {
       <div className="container mx-auto px-6 md:px-14 flex items-center relative z-10 w-full">
         <div className="w-full lg:w-1/2">
           <span className="inline-block px-4 py-2 bg-ukraine-blue text-white font-barlow font-bold tracking-[0.2em] uppercase clip-tag mb-6 animate-fadeIn">
-            Ukrainian Thunder
+            {copy.tag}
           </span>
           <h1 className="font-bebas text-[80px] md:text-[140px] leading-[0.9] uppercase mb-10">
-            <span className="block animate-slideUp">The Be<span className="relative inline-block"><img src="/images/volleyball-ball-svgrepo-com.svg" alt="" className="hidden md:block absolute -top-[0.7em] left-1/2 -translate-x-1/2 w-[0.55em] h-[0.55em] drop-shadow-[0_0_15px_rgba(255,213,0,0.9)]" />a</span>st</span>
-            <span className="block outline-text animate-slideUp delay-200">From</span>
-            <span className="block text-gold animate-slideUp delay-400">Ukraine</span>
+            <span className="block animate-slideUp">
+              <span className="relative inline-block">
+                {copy.line1}
+                <img
+                  src="/images/volleyball-ball-svgrepo-com.svg"
+                  alt=""
+                  className="hidden md:block absolute -top-[0.7em] -right-[0.35em] w-[0.55em] h-[0.55em] drop-shadow-[0_0_15px_rgba(255,213,0,0.9)]"
+                />
+              </span>
+            </span>
+            <span className="block outline-text animate-slideUp delay-200">{copy.line2}</span>
+            <span className="block text-gold animate-slideUp delay-400">{copy.line3}</span>
           </h1>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 mt-10 animate-fadeIn delay-500">
             <Link
               href="/shop"
               className="px-8 py-4 bg-gold text-slate-950 font-barlow font-extrabold uppercase tracking-wider clip-btn hover:bg-white hover:scale-105 transition-all shadow-xl inline-block"
             >
-              Explore Collection
+              {copy.ctaPrimary}
             </Link>
             <a href="#athlete" className="font-barlow font-semibold uppercase tracking-[0.15em] text-white border-b-2 border-ukraine-blue hover:text-gold transition-colors">
-              Full Story
+              {copy.ctaSecondary}
             </a>
           </div>
         </div>

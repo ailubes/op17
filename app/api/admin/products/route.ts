@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { BackorderPolicy } from "@prisma/client";
 import { roundWhole } from "@/lib/pricing";
+import { getPublicObjectUrl } from "@/lib/s3";
 
 const parseWhole = (value: unknown) => {
   const numberValue = typeof value === "number" ? value : Number(value);
@@ -20,10 +21,23 @@ export const GET = async (request: Request) => {
 
   const products = await prisma.product.findMany({
     orderBy: { createdAt: "desc" },
-    include: { category: true, collection: true, variants: true, media: true },
+    include: {
+      category: true,
+      collection: true,
+      variants: true,
+      media: { orderBy: { sortOrder: "asc" } },
+    },
   });
 
-  return NextResponse.json({ data: products });
+  const withUrls = products.map((product) => ({
+    ...product,
+    media: product.media.map((item) => ({
+      ...item,
+      url: getPublicObjectUrl(item.bucket, item.objectKey),
+    })),
+  }));
+
+  return NextResponse.json({ data: withUrls });
 };
 
 export const POST = async (request: Request) => {

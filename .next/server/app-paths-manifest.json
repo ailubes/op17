@@ -1,9 +1,6 @@
 {
-  "/api/storefront/products/route": "app/api/storefront/products/route.js",
   "/api/cart/route": "app/api/cart/route.js",
-  "/shop/page": "app/shop/page.js",
+  "/api/storefront/products/route": "app/api/storefront/products/route.js",
   "/page": "app/page.js",
-  "/admin/products/page": "app/admin/products/page.js",
-  "/admin/collections/page": "app/admin/collections/page.js",
-  "/admin/variants/page": "app/admin/variants/page.js"
+  "/shop/page": "app/shop/page.js"
 }
