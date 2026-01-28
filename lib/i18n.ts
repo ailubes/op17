@@ -351,7 +351,7 @@ export const messages = {
       hero: {
         tag: "Український грім",
         line1: "ЗВІР",
-        line2: "З",
+        line2: "З НАШОЇ",
         line3: "УКРАЇНИ",
         ctaPrimary: "Переглянути колекцію",
         ctaSecondary: "Повна історія",
