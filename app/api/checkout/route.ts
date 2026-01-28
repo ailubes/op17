@@ -101,6 +101,10 @@ export const POST = async (request: Request) => {
     ? body.provider
     : null;
 
+  if (provider === PaymentProvider.MONOBANK && currency !== Currency.UAH) {
+    return NextResponse.json({ error: "Monobank supports only UAH." }, { status: 400 });
+  }
+
   const orderNumber = generateOrderNumber();
 
   try {

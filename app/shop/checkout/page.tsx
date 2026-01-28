@@ -103,6 +103,17 @@ export default function CheckoutPage() {
     return cart.items.reduce((sum, item) => sum + item.unitPriceEur * item.quantity, 0);
   }, [cart]);
 
+  const availableProviders = useMemo(() => {
+    if (form.currency === "UAH") return PAYMENT_PROVIDERS;
+    return PAYMENT_PROVIDERS.filter((provider) => provider === "LIQPAY");
+  }, [form.currency]);
+
+  useEffect(() => {
+    if (form.currency !== "UAH" && form.provider === "MONOBANK") {
+      setForm((prev) => ({ ...prev, provider: "LIQPAY" }));
+    }
+  }, [form.currency, form.provider]);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!cart || cart.items.length === 0) {
@@ -396,13 +407,18 @@ export default function CheckoutPage() {
                     onChange={(event) => setForm({ ...form, provider: event.target.value })}
                     className="w-full bg-slate-950 border border-white/10 px-4 py-3 text-white"
                   >
-                    {PAYMENT_PROVIDERS.map((provider) => (
+                    {availableProviders.map((provider) => (
                       <option key={provider} value={provider}>
                         {provider}
                       </option>
                     ))}
                   </select>
                 </div>
+                {form.currency !== "UAH" && (
+                  <p className="mt-3 text-xs text-slate-500">
+                    Monobank supports only UAH. Use LiqPay for {form.currency}.
+                  </p>
+                )}
               </section>
 
               <button

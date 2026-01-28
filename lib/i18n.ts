@@ -575,7 +575,7 @@ export const messages = {
         ],
       },
       trophy: {
-        marquee: "2X ЧЕМПІОН СВІТУ - MVP - 8 РОКІВ КАПІТАН -",
+        marquee: "2X ЧЕМПІОН СВІТУ - MVP - 8 РОКІВ КАПІТАН НАЦІОНАЛЬНОЇ ЗБІРНОЇ -",
         clubName: "SIR SICOMA MONINI PERUGIA",
       },
       footer: {
@@ -604,7 +604,7 @@ export const messages = {
       uncategorized: "Без категорії",
       secureCheckout: "Безпечна оплата",
       officialGear: "Офіційний мерч",
-      novaPostDelivery: "Доставка Nova Post",
+      novaPostDelivery: "Доставка Нова Пошта, ROZETKA або кур'єром",
       secureCheckoutDesc: "Оплата через LiqPay або Monobank",
       officialGearDesc: "Підтверджений мерч OP17",
       novaPostDeliveryDesc: "Відділення або кур'єр",
@@ -633,7 +633,7 @@ export const messages = {
       postalCode: "Індекс",
       street1: "Адреса",
       street2: "Квартира (за бажанням)",
-      novaPostOffice: "Відділення Nova Post",
+      novaPostOffice: "Відділення Нової Пошти",
       placeOrder: "Оформити замовлення",
       processing: "Обробка...",
       redirecting: "Перенаправлення до оплати...",
@@ -664,7 +664,7 @@ export const messages = {
       cart: "Кошик",
       checkout: "Оплата",
       paymentStatus: "Статус оплати",
-      shipping: "Доставка Nova Post (відділення або кур'єр)",
+      shipping: "Доставка Нова пошта, ROZETKA або кур'єром (відділення або кур'єр)",
       payments: "Оплата через LiqPay або Monobank",
       supportEmail: "Підтримка: support@op17.fit",
       tagline:

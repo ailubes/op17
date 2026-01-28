@@ -1,4 +1,4 @@
-﻿export type AppLocale = "en" | "uk" | "it";
+export type AppLocale = "en" | "uk" | "it";
 
 export const DEFAULT_LOCALE: AppLocale = "en";
 export const LOCALE_COOKIE = "op17_locale";
@@ -22,6 +22,19 @@ export const resolveLocaleFromCountry = (country?: string | null): AppLocale => 
   return DEFAULT_LOCALE;
 };
 
+export const resolveLocaleFromNavigator = (): AppLocale => {
+  if (typeof navigator === "undefined") return DEFAULT_LOCALE;
+  const raw = navigator.language || navigator.languages?.[0] || "";
+  const lower = raw.toLowerCase();
+  const parts = lower.split(/[-_]/);
+  const base = parts[0] || "";
+  const region = parts[1] || "";
+
+  if (base === "it" || region === "it") return "it";
+  if (base === "uk" || base === "ua" || region === "ua" || region === "uk") return "uk";
+  return DEFAULT_LOCALE;
+};
+
 export const getCookieValue = (cookieHeader: string | null, name: string) => {
   if (!cookieHeader) return null;
   const cookies = cookieHeader.split(";").map((part) => part.trim());
@@ -40,7 +53,8 @@ export const getRequestLocale = (request: Request): AppLocale => {
 export const getClientLocale = (): AppLocale => {
   if (typeof document === "undefined") return DEFAULT_LOCALE;
   const cookie = getCookieValue(document.cookie, LOCALE_COOKIE);
-  return normalizeLocale(cookie) || DEFAULT_LOCALE;
+  const normalized = normalizeLocale(cookie);
+  return normalized || resolveLocaleFromNavigator();
 };
 
 export const setClientLocale = (locale: AppLocale) => {
