@@ -1,6 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
+import { getRouteParam, RouteContext } from "@/lib/route-context";
 import { BackorderPolicy, CollectionStatus, SaleMode } from "@prisma/client";
 
 const parseDate = (value?: string | null) => {
@@ -27,14 +28,19 @@ const ensureSingleLiveDrop = async (excludeId?: string) => {
   return true;
 };
 
-export const GET = async (request: Request, context: { params: { id: string } }) => {
+export const GET = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+  }
+
   const collection = await prisma.collection.findUnique({
-    where: { id: context.params.id },
+    where: { id },
     include: { products: true, media: true },
   });
 
@@ -45,10 +51,15 @@ export const GET = async (request: Request, context: { params: { id: string } })
   return NextResponse.json({ data: collection });
 };
 
-export const PATCH = async (request: Request, context: { params: { id: string } }) => {
+export const PATCH = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
   const body = await request.json().catch(() => null);
@@ -57,7 +68,7 @@ export const PATCH = async (request: Request, context: { params: { id: string } 
   }
 
   const existing = await prisma.collection.findUnique({
-    where: { id: context.params.id },
+    where: { id },
   });
 
   if (!existing) {
@@ -104,13 +115,18 @@ export const PATCH = async (request: Request, context: { params: { id: string } 
   return NextResponse.json({ data: updated });
 };
 
-export const DELETE = async (request: Request, context: { params: { id: string } }) => {
+export const DELETE = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.collection.delete({ where: { id: context.params.id } });
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+  }
+
+  await prisma.collection.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 };
 

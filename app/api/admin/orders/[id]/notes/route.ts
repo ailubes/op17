@@ -2,11 +2,17 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { OrderEventType } from "@prisma/client";
+import { getRouteParam, RouteContext } from "@/lib/route-context";
 
-export const POST = async (request: Request, context: { params: { id: string } }) => {
+export const POST = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
   const body = await request.json().catch(() => null);
@@ -15,7 +21,7 @@ export const POST = async (request: Request, context: { params: { id: string } }
     return NextResponse.json({ error: "Note is required." }, { status: 400 });
   }
 
-  const order = await prisma.order.findUnique({ where: { id: context.params.id } });
+  const order = await prisma.order.findUnique({ where: { id } });
   if (!order) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

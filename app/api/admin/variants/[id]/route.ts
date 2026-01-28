@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { BackorderPolicy } from "@prisma/client";
 import { roundWhole } from "@/lib/pricing";
+import { getRouteParam, RouteContext } from "@/lib/route-context";
 
 const parseWhole = (value: unknown) => {
   const numberValue = typeof value === "number" ? value : Number(value);
@@ -12,14 +13,19 @@ const parseWhole = (value: unknown) => {
   return roundWhole(numberValue);
 };
 
-export const GET = async (request: Request, context: { params: { id: string } }) => {
+export const GET = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+  }
+
   const variant = await prisma.variant.findUnique({
-    where: { id: context.params.id },
+    where: { id },
     include: { product: true, media: true },
   });
 
@@ -30,10 +36,15 @@ export const GET = async (request: Request, context: { params: { id: string } })
   return NextResponse.json({ data: variant });
 };
 
-export const PATCH = async (request: Request, context: { params: { id: string } }) => {
+export const PATCH = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
   const body = await request.json().catch(() => null);
@@ -73,20 +84,25 @@ export const PATCH = async (request: Request, context: { params: { id: string } 
   }
 
   const updated = await prisma.variant.update({
-    where: { id: context.params.id },
+    where: { id },
     data,
   });
 
   return NextResponse.json({ data: updated });
 };
 
-export const DELETE = async (request: Request, context: { params: { id: string } }) => {
+export const DELETE = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.variant.delete({ where: { id: context.params.id } });
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+  }
+
+  await prisma.variant.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 };
 

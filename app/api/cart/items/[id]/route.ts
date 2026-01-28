@@ -1,6 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateCart } from "@/lib/cart";
+import { getRouteParam, RouteContext } from "@/lib/route-context";
 
 const resolveBackorderPolicy = (variant: any, product: any) => {
   return (
@@ -11,7 +12,12 @@ const resolveBackorderPolicy = (variant: any, product: any) => {
   );
 };
 
-export const PATCH = async (request: Request, context: { params: { id: string } }) => {
+export const PATCH = async (request: Request, context: RouteContext) => {
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+  }
+
   const body = await request.json().catch(() => null);
   const quantity = Number(body?.quantity ?? 0);
 
@@ -21,7 +27,7 @@ export const PATCH = async (request: Request, context: { params: { id: string } 
 
   const { cart } = await getOrCreateCart(request);
   const item = await prisma.cartItem.findUnique({
-    where: { id: context.params.id },
+    where: { id },
     include: {
       variant: {
         include: { product: { include: { collection: true } } },
@@ -54,9 +60,14 @@ export const PATCH = async (request: Request, context: { params: { id: string } 
   return NextResponse.json({ data: updated });
 };
 
-export const DELETE = async (request: Request, context: { params: { id: string } }) => {
+export const DELETE = async (request: Request, context: RouteContext) => {
   const { cart } = await getOrCreateCart(request);
-  const item = await prisma.cartItem.findUnique({ where: { id: context.params.id } });
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+  }
+
+  const item = await prisma.cartItem.findUnique({ where: { id } });
 
   if (!item || item.cartId !== cart.id) {
     return NextResponse.json({ error: "Item not found." }, { status: 404 });

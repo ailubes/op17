@@ -1,16 +1,29 @@
 ﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
-import { OrderEventType, OrderStatus, ShipmentStatus, ShippingCarrier, ShippingMethod } from "@prisma/client";
+import {
+  OrderEventType,
+  OrderStatus,
+  Prisma,
+  ShipmentStatus,
+  ShippingCarrier,
+  ShippingMethod,
+} from "@prisma/client";
+import { getRouteParam, RouteContext } from "@/lib/route-context";
 
-export const GET = async (request: Request, context: { params: { id: string } }) => {
+export const GET = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+  }
+
   const order = await prisma.order.findUnique({
-    where: { id: context.params.id },
+    where: { id },
     include: {
       items: true,
       payments: { include: { refunds: true } },
@@ -28,10 +41,15 @@ export const GET = async (request: Request, context: { params: { id: string } })
   return NextResponse.json({ data: order });
 };
 
-export const PATCH = async (request: Request, context: { params: { id: string } }) => {
+export const PATCH = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
   const body = await request.json().catch(() => null);
@@ -40,7 +58,7 @@ export const PATCH = async (request: Request, context: { params: { id: string } 
   }
 
   const order = await prisma.order.findUnique({
-    where: { id: context.params.id },
+    where: { id },
     include: { shipments: true },
   });
 
@@ -49,7 +67,7 @@ export const PATCH = async (request: Request, context: { params: { id: string } 
   }
 
   const data: Record<string, unknown> = {};
-  const events: { type: OrderEventType; message: string; metadata?: Record<string, unknown> }[] = [];
+  const events: { type: OrderEventType; message: string; metadata?: Prisma.InputJsonValue }[] = [];
 
   if (body.status && Object.values(OrderStatus).includes(body.status)) {
     if (body.status !== order.status) {
@@ -57,7 +75,7 @@ export const PATCH = async (request: Request, context: { params: { id: string } 
       events.push({
         type: OrderEventType.STATUS_CHANGE,
         message: `Status updated: ${order.status} > ${body.status}`,
-        metadata: { from: order.status, to: body.status },
+        metadata: { from: order.status, to: body.status } as Prisma.JsonObject,
       });
     }
   }
@@ -101,7 +119,7 @@ export const PATCH = async (request: Request, context: { params: { id: string } 
         metadata: {
           trackingNumber: trackingNumber || undefined,
           status: shipmentStatus || undefined,
-        },
+        } as Prisma.JsonObject,
       });
     }
 

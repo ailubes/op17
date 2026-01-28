@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     'The official personal website of Oleh Plotnytskyi, Ukrainian volleyball champion and Sir Safety Perugia outside hitter. Featuring career highlights, statistics, and exclusive merchandise.',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
-  const cookieStore = cookies();
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const cookieStore = await cookies();
   const cookieValue = cookieStore.get(LOCALE_COOKIE)?.value;
   const locale = normalizeLocale(cookieValue) || DEFAULT_LOCALE;
 

@@ -1011,7 +1011,15 @@ export const messages = {
   },
 } as const;
 
-export type HomeMessages = typeof messages.en.home;
+type DeepString<T> = T extends string
+  ? string
+  : T extends (infer U)[]
+    ? DeepString<U>[]
+    : T extends object
+      ? { [K in keyof T]: DeepString<T[K]> }
+      : T;
+
+export type HomeMessages = DeepString<typeof messages.en.home>;
 
 export const getMessages = (locale: AppLocale) => {
   return messages[locale] || messages.en;

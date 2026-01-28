@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { OrderEventType, RefundStatus } from "@prisma/client";
+import { getRouteParam, RouteContext } from "@/lib/route-context";
 
 const sumRefunds = (refunds: { amountMinor: number; status: string }[]) => {
   return refunds
@@ -9,10 +10,15 @@ const sumRefunds = (refunds: { amountMinor: number; status: string }[]) => {
     .reduce((sum, refund) => sum + refund.amountMinor, 0);
 };
 
-export const POST = async (request: Request, context: { params: { id: string } }) => {
+export const POST = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const id = await getRouteParam(context, "id");
+  if (!id) {
+    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
   const body = await request.json().catch(() => null);
@@ -29,7 +35,7 @@ export const POST = async (request: Request, context: { params: { id: string } }
   }
 
   const order = await prisma.order.findUnique({
-    where: { id: context.params.id },
+    where: { id },
     include: { payments: { include: { refunds: true } } },
   });
 
