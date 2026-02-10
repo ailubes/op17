@@ -61,11 +61,6 @@ export const ShopPreview: React.FC<ShopPreviewProps> = ({ copy }) => {
       }))
     : [];
 
-  // Don't render section if no products and not loading
-  if (!loading && displayProducts.length === 0) {
-    return null;
-  }
-
   return (
     <section className="py-32 px-6 md:px-14 container mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-14">
@@ -114,7 +109,11 @@ export const ShopPreview: React.FC<ShopPreviewProps> = ({ copy }) => {
               <ProductCard key={product.id} product={product} copy={copy} />
             ))
           )
-          : null}
+          : (
+            <div className="col-span-full text-center py-12">
+              <p className="text-slate-400 font-inter">No products available. Check that you have active products with visible collections.</p>
+            </div>
+          )}
       </div>
     </section>
   );
