@@ -4,6 +4,7 @@ import { requireAdminSession } from "@/lib/guards";
 import { BackorderPolicy } from "@prisma/client";
 import { roundWhole } from "@/lib/pricing";
 import { getPublicObjectUrl } from "@/lib/s3";
+import { logProductCreated } from "@/lib/audit";
 
 const parseWhole = (value: unknown) => {
   const numberValue = typeof value === "number" ? value : Number(value);
@@ -133,6 +134,14 @@ export const POST = async (request: Request) => {
           : undefined,
     },
   });
+
+  // Log product creation
+  await logProductCreated(
+    session.userId,
+    product.id,
+    product.name,
+    request
+  );
 
   return NextResponse.json({ data: product }, { status: 201 });
 };

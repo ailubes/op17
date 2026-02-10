@@ -1,16 +1,20 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  EntityCard,
+  EntityList,
+  ActionButton,
+  MobileBottomSheet,
+  toastSuccess,
+  toastError,
+} from "@/components/admin";
 
 const BACKORDER_POLICIES = ["DISALLOW", "ALLOW"] as const;
 const LOW_STOCK_THRESHOLD = 5;
 
-type Product = {
-  id: string;
-  name: string;
-};
-
+type Product = { id: string; name: string };
 type Variant = {
   id: string;
   sku: string;
@@ -43,6 +47,7 @@ export default function AdminVariants() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [bulkStockUpdates, setBulkStockUpdates] = useState<Record<string, string>>({});
   const [savingBulk, setSavingBulk] = useState(false);
@@ -75,6 +80,7 @@ export default function AdminVariants() {
   const resetForm = () => {
     setForm({ ...emptyForm });
     setEditingId(null);
+    setIsFormOpen(false);
   };
 
   const handleEdit = (variant: Variant) => {
@@ -90,6 +96,12 @@ export default function AdminVariants() {
       isActive: variant.isActive ?? true,
       backorderPolicy: variant.backorderPolicy || "DISALLOW",
     });
+    setIsFormOpen(true);
+  };
+
+  const handleCreate = () => {
+    resetForm();
+    setIsFormOpen(true);
   };
 
   const submitForm = async () => {
@@ -116,6 +128,7 @@ export default function AdminVariants() {
       return;
     }
 
+    toastSuccess(editingId ? "Variant updated successfully" : "Variant created successfully");
     resetForm();
     loadData();
   };
@@ -123,6 +136,7 @@ export default function AdminVariants() {
   const removeVariant = async (id: string) => {
     if (!confirm("Delete this variant?")) return;
     await fetch(`/api/admin/variants/${id}`, { method: "DELETE", credentials: "include" });
+    toastSuccess("Variant deleted");
     loadData();
   };
 
@@ -146,10 +160,7 @@ export default function AdminVariants() {
 
     const updates = Object.entries(bulkStockUpdates)
       .filter(([_, value]) => value !== "")
-      .map(([id, value]) => ({
-        id,
-        stock: parseInt(value, 10),
-      }));
+      .map(([id, value]) => ({ id, stock: parseInt(value, 10) }));
 
     if (updates.length === 0) {
       setBulkEditMode(false);
@@ -158,27 +169,22 @@ export default function AdminVariants() {
     }
 
     try {
-      // Update each variant sequentially
       for (const update of updates) {
         if (Number.isNaN(update.stock)) continue;
-
-        const res = await fetch(`/api/admin/variants/${update.id}`, {
+        await fetch(`/api/admin/variants/${update.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ stock: update.stock }),
           credentials: "include",
         });
-
-        if (!res.ok) {
-          throw new Error(`Failed to update variant ${update.id}`);
-        }
       }
 
       setBulkStockUpdates({});
       setBulkEditMode(false);
+      toastSuccess("Stock updated successfully");
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bulk update failed");
+      toastError("Bulk update failed");
     } finally {
       setSavingBulk(false);
     }
@@ -189,313 +195,295 @@ export default function AdminVariants() {
     setBulkStockUpdates({});
   };
 
-  const formTitle = useMemo(
-    () => (editingId ? "Edit Variant" : "Create Variant"),
-    [editingId]
-  );
+  const formTitle = useMemo(() => (editingId ? "Edit Variant" : "Create Variant"), [editingId]);
 
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-bebas text-5xl">Variants</h1>
-          <p className="text-slate-400">Create SKUs, manage stock, and set variant pricing.</p>
+  const getStockStatus = (variant: Variant) => {
+    const isOutOfStock = variant.isActive && variant.stock === 0;
+    const isLowStock = variant.isActive && variant.stock < LOW_STOCK_THRESHOLD && variant.stock > 0;
+    if (isOutOfStock) return { variant: "error" as const, label: "Out of Stock" };
+    if (isLowStock) return { variant: "error" as const, label: "Low Stock" };
+    if (!variant.isActive) return { variant: "default" as const, label: "Inactive" };
+    return { variant: "success" as const, label: "In Stock" };
+  };
+
+  const formContent = (
+    <div className="p-4 space-y-4">
+      {error && (
+        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+          <p className="text-sm text-red-400">{error}</p>
         </div>
-        <Link
-          href="/admin"
-          className="text-sm uppercase tracking-[0.2em] text-slate-400 hover:text-gold"
+      )}
+
+      <div className="space-y-2">
+        <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Product</label>
+        <select
+          value={form.productId}
+          onChange={(e) => setForm({ ...form, productId: e.target.value })}
+          className="w-full bg-slate-950 border border-white/10 px-4 py-3 rounded-lg text-white min-h-[48px]"
         >
-          Back to Admin
-        </Link>
+          <option value="">Select product</option>
+          {products.map((product) => (
+            <option key={product.id} value={product.id}>{product.name}</option>
+          ))}
+        </select>
       </div>
 
-      <section className="border border-white/10 bg-slate-900/60 p-6">
-        <h2 className="font-bebas text-2xl mb-4">{formTitle}</h2>
-        {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Product</label>
-            <select
-              value={form.productId}
-              onChange={(event) => setForm({ ...form, productId: event.target.value })}
-              className="w-full bg-slate-950 border border-white/10 px-4 py-3 text-white"
-            >
-              <option value="">Select product</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500">SKU</label>
-            <input
-              value={form.sku}
-              onChange={(event) => setForm({ ...form, sku: event.target.value })}
-              className="w-full bg-slate-950 border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-gold"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Name</label>
-            <input
-              value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              className="w-full bg-slate-950 border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-gold"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Size</label>
-            <input
-              value={form.size}
-              onChange={(event) => setForm({ ...form, size: event.target.value })}
-              className="w-full bg-slate-950 border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-gold"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Color</label>
-            <input
-              value={form.color}
-              onChange={(event) => setForm({ ...form, color: event.target.value })}
-              className="w-full bg-slate-950 border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-gold"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Price (EUR)</label>
-            <input
-              type="number"
-              value={form.priceEur}
-              onChange={(event) => setForm({ ...form, priceEur: event.target.value })}
-              className="w-full bg-slate-950 border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-gold"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Stock</label>
-            <input
-              type="number"
-              value={form.stock}
-              onChange={(event) => setForm({ ...form, stock: event.target.value })}
-              className="w-full bg-slate-950 border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-gold"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Backorder</label>
-            <select
-              value={form.backorderPolicy}
-              onChange={(event) => setForm({ ...form, backorderPolicy: event.target.value })}
-              className="w-full bg-slate-950 border border-white/10 px-4 py-3 text-white"
-            >
-              {BACKORDER_POLICIES.map((policy) => (
-                <option key={policy} value={policy}>
-                  {policy}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-3">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">SKU</label>
+          <input
+            value={form.sku}
+            onChange={(e) => setForm({ ...form, sku: e.target.value })}
+            className="w-full bg-slate-950 border border-white/10 px-4 py-3 rounded-lg text-white focus:outline-none focus:border-gold min-h-[48px]"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Name</label>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="w-full bg-slate-950 border border-white/10 px-4 py-3 rounded-lg text-white focus:outline-none focus:border-gold min-h-[48px]"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Size</label>
+          <input
+            value={form.size}
+            onChange={(e) => setForm({ ...form, size: e.target.value })}
+            className="w-full bg-slate-950 border border-white/10 px-4 py-3 rounded-lg text-white focus:outline-none focus:border-gold min-h-[48px]"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Color</label>
+          <input
+            value={form.color}
+            onChange={(e) => setForm({ ...form, color: e.target.value })}
+            className="w-full bg-slate-950 border border-white/10 px-4 py-3 rounded-lg text-white focus:outline-none focus:border-gold min-h-[48px]"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Price (EUR)</label>
+          <input
+            type="number"
+            value={form.priceEur}
+            onChange={(e) => setForm({ ...form, priceEur: e.target.value })}
+            className="w-full bg-slate-950 border border-white/10 px-4 py-3 rounded-lg text-white focus:outline-none focus:border-gold min-h-[48px]"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Stock</label>
+          <input
+            type="number"
+            value={form.stock}
+            onChange={(e) => setForm({ ...form, stock: e.target.value })}
+            className="w-full bg-slate-950 border border-white/10 px-4 py-3 rounded-lg text-white focus:outline-none focus:border-gold min-h-[48px]"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Backorder</label>
+          <select
+            value={form.backorderPolicy}
+            onChange={(e) => setForm({ ...form, backorderPolicy: e.target.value })}
+            className="w-full bg-slate-950 border border-white/10 px-4 py-3 rounded-lg text-white min-h-[48px]"
+          >
+            {BACKORDER_POLICIES.map((policy) => (
+              <option key={policy} value={policy}>{policy}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-end pb-3">
+          <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={form.isActive}
-              onChange={(event) => setForm({ ...form, isActive: event.target.checked })}
-              className="h-4 w-4"
+              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              className="h-5 w-5 rounded border-white/10 bg-slate-950 text-gold focus:ring-gold"
             />
             <span className="text-sm text-slate-300">Active</span>
-          </div>
+          </label>
         </div>
-        <div className="mt-6 flex items-center gap-4">
-          <button
-            onClick={submitForm}
-            className="px-6 py-3 bg-gold text-slate-950 font-barlow font-bold uppercase tracking-wider text-sm hover:bg-white transition-colors"
+      </div>
+
+      <div className="flex gap-3 pt-2">
+        <ActionButton variant="primary" onClick={submitForm} fullWidth>
+          {editingId ? "Save Changes" : "Create Variant"}
+        </ActionButton>
+        {editingId && (
+          <ActionButton variant="ghost" onClick={resetForm}>
+            Cancel
+          </ActionButton>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="font-bebas text-4xl sm:text-5xl">Variants</h1>
+          <p className="text-slate-400 text-sm sm:text-base">Create SKUs, manage stock, and set variant pricing.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <ActionButton
+            variant="primary"
+            onClick={handleCreate}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            }
           >
-            {editingId ? "Save Changes" : "Create Variant"}
-          </button>
-          {editingId && (
-            <button
-              onClick={resetForm}
-              className="text-sm uppercase tracking-[0.2em] text-slate-400 hover:text-white"
-            >
-              Cancel
-            </button>
-          )}
+            New Variant
+          </ActionButton>
+          <Link
+            href="/admin"
+            className="text-sm uppercase tracking-[0.2em] text-slate-400 hover:text-gold transition-colors"
+          >
+            Back
+          </Link>
         </div>
+      </div>
+
+      {/* Desktop Form */}
+      <section className="hidden lg:block border border-white/10 bg-slate-900/60 rounded-lg p-6">
+        <h2 className="font-bebas text-2xl mb-4">{formTitle}</h2>
+        {formContent}
       </section>
 
-      <section className="space-y-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="font-bebas text-2xl">Existing Variants</h2>
-          <div className="flex flex-wrap items-center gap-4">
-            {!bulkEditMode ? (
-              <button
-                onClick={() => setBulkEditMode(true)}
-                className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-gold transition"
-              >
-                Bulk Edit Stock
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={saveBulkStockUpdates}
-                  disabled={savingBulk}
-                  className="px-4 py-2 bg-gold text-slate-950 font-barlow font-bold uppercase tracking-wider text-xs hover:bg-white transition disabled:opacity-50"
-                >
-                  {savingBulk ? "Saving..." : "Save Changes"}
-                </button>
-                <button
-                  onClick={cancelBulkEdit}
-                  disabled={savingBulk}
-                  className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-red-400 text-slate-400 hover:text-white transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                <span className="text-slate-400">Low stock (&lt; {LOW_STOCK_THRESHOLD})</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                <span className="text-slate-400">In stock</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Mobile Form Bottom Sheet */}
+      <MobileBottomSheet isOpen={isFormOpen} onClose={resetForm} title={formTitle}>
+        {formContent}
+      </MobileBottomSheet>
 
-        {bulkEditMode && (
-          <div className="bg-slate-900/60 border border-gold/30 p-4 text-sm">
-            <p className="text-slate-300">
-              <span className="text-gold font-semibold">Bulk Edit Mode:</span> Use the +/- buttons or type directly in the stock field to update multiple variants at once.
-            </p>
+      {/* Bulk Edit Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="font-bebas text-xl sm:text-2xl text-slate-300">Existing Variants</h2>
+
+        {!bulkEditMode ? (
+          <ActionButton variant="outline" size="sm" onClick={() => setBulkEditMode(true)}>
+            Bulk Edit Stock
+          </ActionButton>
+        ) : (
+          <div className="flex items-center gap-2">
+            <ActionButton
+              variant="primary"
+              size="sm"
+              onClick={saveBulkStockUpdates}
+              disabled={savingBulk}
+            >
+              {savingBulk ? "Saving..." : "Save Changes"}
+            </ActionButton>
+            <ActionButton variant="ghost" size="sm" onClick={cancelBulkEdit} disabled={savingBulk}>
+              Cancel
+            </ActionButton>
           </div>
         )}
+      </div>
 
-        {loading ? (
-          <p className="text-slate-400">Loading variants...</p>
-        ) : (
-          <div className="space-y-4">
-            {variants.map((variant) => {
-              const isLowStock = variant.isActive && variant.stock < LOW_STOCK_THRESHOLD;
-              const isOutOfStock = variant.isActive && variant.stock === 0;
-              const hasStockChange = bulkStockUpdates[variant.id] !== undefined;
+      {bulkEditMode && (
+        <div className="bg-slate-900/60 border border-gold/30 rounded-lg p-4 text-sm">
+          <p className="text-slate-300">
+            <span className="text-gold font-semibold">Bulk Edit Mode:</span> Use +/- buttons or type directly to update multiple variants at once.
+          </p>
+        </div>
+      )}
 
-              return (
-                <div
-                  key={variant.id}
-                  className={`border p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between transition ${
-                    isLowStock
-                      ? "border-red-500/30 bg-red-500/5"
-                      : hasStockChange
-                      ? "border-gold/30 bg-gold/5"
-                      : "border-white/10 bg-slate-900/40"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">
-                      {isOutOfStock ? (
-                        <span className="flex h-3 w-3 rounded-full bg-red-600" title="Out of stock">
-                          <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
-                        </span>
-                      ) : isLowStock ? (
-                        <span className="flex h-3 w-3 rounded-full bg-red-500" title="Low stock">
-                          <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
-                        </span>
-                      ) : variant.isActive ? (
-                        <span className="h-3 w-3 rounded-full bg-green-500" title="In stock"></span>
-                      ) : (
-                        <span className="h-3 w-3 rounded-full bg-slate-600" title="Inactive"></span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bebas text-xl">{variant.sku}</h3>
-                        {isLowStock && (
-                          <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">
-                            {isOutOfStock ? "Out of Stock" : "Low Stock"}
-                          </span>
-                        )}
-                        {!variant.isActive && (
-                          <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-slate-700 text-slate-400 border border-slate-600">
-                            Inactive
-                          </span>
-                        )}
-                        {hasStockChange && (
-                          <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-gold/20 text-gold border border-gold/30">
-                            Modified
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        {variant.product?.name || "No product"}
-                        {variant.size && ` · Size ${variant.size}`}
-                        {variant.color && ` · ${variant.color}`}
-                      </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-                        {bulkEditMode ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => adjustStock(variant.id, -1)}
-                              className="w-8 h-8 flex items-center justify-center border border-white/10 hover:border-gold text-slate-400 hover:text-white transition"
-                              disabled={!variant.isActive}
-                            >
-                              −
-                            </button>
-                            <input
-                              type="number"
-                              min="0"
-                              value={bulkStockUpdates[variant.id] ?? variant.stock}
-                              onChange={(e) => handleBulkStockChange(variant.id, e.target.value)}
-                              disabled={!variant.isActive}
-                              className={`w-16 bg-slate-950 border px-2 py-1 text-center text-white focus:outline-none focus:border-gold disabled:opacity-50 ${
-                                hasStockChange ? "border-gold" : "border-white/10"
-                              }`}
-                            />
-                            <button
-                              onClick={() => adjustStock(variant.id, 1)}
-                              className="w-8 h-8 flex items-center justify-center border border-white/10 hover:border-gold text-slate-400 hover:text-white transition"
-                              disabled={!variant.isActive}
-                            >
-                              +
-                            </button>
-                            <span className="text-slate-500 ml-2">
-                              was {variant.stock}
-                            </span>
-                          </div>
-                        ) : (
-                          <>
-                            <span className={`${isLowStock ? "text-red-400 font-semibold" : "text-slate-400"}`}>
-                              Stock: {variant.stock}
-                            </span>
-                            <span className="text-slate-600">|</span>
-                            <span className="text-slate-400">EUR {variant.priceEur ?? "—"}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleEdit(variant)}
-                      disabled={bulkEditMode}
-                      className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-gold disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+      {/* Stock Legend */}
+      <div className="flex flex-wrap items-center gap-4 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-red-500"></span>
+          <span className="text-slate-400">Low/Out of stock (&lt; {LOW_STOCK_THRESHOLD})</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-green-500"></span>
+          <span className="text-slate-400">In stock</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-slate-600"></span>
+          <span className="text-slate-400">Inactive</span>
+        </div>
+      </div>
+
+      {/* Variants List */}
+      <EntityList loading={loading} emptyMessage="No variants yet. Create your first variant above.">
+        {variants.map((variant) => {
+          const stockStatus = getStockStatus(variant);
+          const hasStockChange = bulkStockUpdates[variant.id] !== undefined;
+          const displayStock = hasStockChange ? bulkStockUpdates[variant.id] : variant.stock;
+
+          return (
+            <EntityCard
+              key={variant.id}
+              title={variant.sku}
+              subtitle={`${variant.product?.name || "No product"}${variant.size ? ` · Size ${variant.size}` : ""}${variant.color ? ` · ${variant.color}` : ""}`}
+              isInactive={!variant.isActive}
+              badges={[stockStatus, ...(hasStockChange ? [{ variant: "warning" as const, label: "Modified" }] : [])]}
+              meta={[
+                { label: "Price", value: `EUR ${variant.priceEur ?? "—"}` },
+              ]}
+              actions={
+                bulkEditMode ? null : (
+                  <>
+                    <ActionButton variant="outline" size="sm" onClick={() => handleEdit(variant)}>
                       Edit
-                    </button>
-                    <button
-                      onClick={() => removeVariant(variant.id)}
-                      disabled={bulkEditMode}
-                      className="px-4 py-2 border border-red-500/40 text-xs uppercase tracking-[0.2em] text-red-300 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                    </ActionButton>
+                    <ActionButton variant="danger" size="sm" onClick={() => removeVariant(variant.id)}>
                       Delete
-                    </button>
+                    </ActionButton>
+                  </>
+                )
+              }
+            >
+              {bulkEditMode && (
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <div className="flex items-center gap-3">
+                    <ActionButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => adjustStock(variant.id, -1)}
+                      disabled={!variant.isActive || savingBulk}
+                    >
+                      −
+                    </ActionButton>
+                    <input
+                      type="number"
+                      min="0"
+                      value={displayStock}
+                      onChange={(e) => handleBulkStockChange(variant.id, e.target.value)}
+                      disabled={!variant.isActive || savingBulk}
+                      className={`w-20 bg-slate-950 border px-3 py-2 text-center text-white rounded-lg focus:outline-none focus:border-gold ${
+                        hasStockChange ? "border-gold" : "border-white/10"
+                      }`}
+                    />
+                    <ActionButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => adjustStock(variant.id, 1)}
+                      disabled={!variant.isActive || savingBulk}
+                    >
+                      +
+                    </ActionButton>
+                    {hasStockChange && (
+                      <span className="text-xs text-slate-500">was {variant.stock}</span>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+              )}
+            </EntityCard>
+          );
+        })}
+      </EntityList>
     </div>
   );
 }
-

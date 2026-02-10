@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { PromoType } from "@prisma/client";
+import { logPromoCodeUpdated, logPromoCodeDeleted } from "@/lib/audit";
 
 // Valid promo types
 const VALID_PROMO_TYPES: PromoType[] = ["PERCENT", "AMOUNT", "FREE_SHIPPING"];
@@ -74,6 +75,7 @@ export const PATCH = async (
   }
 
   const updateData: Record<string, unknown> = {};
+  const changes: Record<string, { from: unknown; to: unknown }> = {};
 
   // Type (cannot change if orders already used it)
   if (
@@ -86,7 +88,10 @@ export const PATCH = async (
         { status: 400 }
       );
     }
-    updateData.type = body.type;
+    if (body.type !== existing.type) {
+      updateData.type = body.type;
+      changes.type = { from: existing.type, to: body.type };
+    }
   }
 
   // Value (cannot change if orders already used it)
@@ -114,18 +119,25 @@ export const PATCH = async (
       );
     }
 
-    updateData.value = value;
+    if (value !== existing.value) {
+      updateData.value = value;
+      changes.value = { from: existing.value, to: value };
+    }
   }
 
   // Active status
-  if (typeof body.isActive === "boolean") {
+  if (typeof body.isActive === "boolean" && body.isActive !== existing.isActive) {
     updateData.isActive = body.isActive;
+    changes.isActive = { from: existing.isActive, to: body.isActive };
   }
 
   // Start date
   if (body.startsAt !== undefined) {
     if (body.startsAt === null) {
-      updateData.startsAt = null;
+      if (existing.startsAt !== null) {
+        updateData.startsAt = null;
+        changes.startsAt = { from: existing.startsAt, to: null };
+      }
     } else if (typeof body.startsAt === "string" && body.startsAt) {
       const startsAt = new Date(body.startsAt);
       if (isNaN(startsAt.getTime())) {
@@ -134,14 +146,20 @@ export const PATCH = async (
           { status: 400 }
         );
       }
-      updateData.startsAt = startsAt;
+      if (startsAt.getTime() !== existing.startsAt?.getTime()) {
+        updateData.startsAt = startsAt;
+        changes.startsAt = { from: existing.startsAt, to: startsAt };
+      }
     }
   }
 
   // End date
   if (body.endsAt !== undefined) {
     if (body.endsAt === null) {
-      updateData.endsAt = null;
+      if (existing.endsAt !== null) {
+        updateData.endsAt = null;
+        changes.endsAt = { from: existing.endsAt, to: null };
+      }
     } else if (typeof body.endsAt === "string" && body.endsAt) {
       const endsAt = new Date(body.endsAt);
       if (isNaN(endsAt.getTime())) {
@@ -150,7 +168,10 @@ export const PATCH = async (
           { status: 400 }
         );
       }
-      updateData.endsAt = endsAt;
+      if (endsAt.getTime() !== existing.endsAt?.getTime()) {
+        updateData.endsAt = endsAt;
+        changes.endsAt = { from: existing.endsAt, to: endsAt };
+      }
     }
   }
 
@@ -167,7 +188,10 @@ export const PATCH = async (
   // Max redemptions (can increase, but not decrease below current count)
   if (body.maxRedemptions !== undefined) {
     if (body.maxRedemptions === null) {
-      updateData.maxRedemptions = null;
+      if (existing.maxRedemptions !== null) {
+        updateData.maxRedemptions = null;
+        changes.maxRedemptions = { from: existing.maxRedemptions, to: null };
+      }
     } else {
       const maxRedemptions = Math.trunc(Number(body.maxRedemptions));
       if (isNaN(maxRedemptions) || maxRedemptions < 0) {
@@ -182,14 +206,20 @@ export const PATCH = async (
           { status: 400 }
         );
       }
-      updateData.maxRedemptions = maxRedemptions;
+      if (maxRedemptions !== existing.maxRedemptions) {
+        updateData.maxRedemptions = maxRedemptions;
+        changes.maxRedemptions = { from: existing.maxRedemptions, to: maxRedemptions };
+      }
     }
   }
 
   // Min subtotal
   if (body.minSubtotalEur !== undefined) {
     if (body.minSubtotalEur === null) {
-      updateData.minSubtotalEur = null;
+      if (existing.minSubtotalEur !== null) {
+        updateData.minSubtotalEur = null;
+        changes.minSubtotalEur = { from: existing.minSubtotalEur, to: null };
+      }
     } else {
       const minSubtotalEur = Math.trunc(Number(body.minSubtotalEur));
       if (isNaN(minSubtotalEur) || minSubtotalEur < 0) {
@@ -198,7 +228,10 @@ export const PATCH = async (
           { status: 400 }
         );
       }
-      updateData.minSubtotalEur = minSubtotalEur;
+      if (minSubtotalEur !== existing.minSubtotalEur) {
+        updateData.minSubtotalEur = minSubtotalEur;
+        changes.minSubtotalEur = { from: existing.minSubtotalEur, to: minSubtotalEur };
+      }
     }
   }
 
@@ -211,6 +244,9 @@ export const PATCH = async (
     where: { id },
     data: updateData,
   });
+
+  // Log promo code update
+  await logPromoCodeUpdated(session.userId, id, updated.code, changes, request);
 
   return NextResponse.json({ data: updated });
 };
@@ -244,6 +280,9 @@ export const DELETE = async (
     where: { id },
     data: { isActive: false },
   });
+
+  // Log promo code deletion (soft delete)
+  await logPromoCodeDeleted(session.userId, id, existing.code, request);
 
   return NextResponse.json({ data: updated });
 };

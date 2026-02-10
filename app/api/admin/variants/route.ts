@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { BackorderPolicy } from "@prisma/client";
 import { roundWhole } from "@/lib/pricing";
+import { logVariantCreated } from "@/lib/audit";
 
 const parseWhole = (value: unknown) => {
   const numberValue = typeof value === "number" ? value : Number(value);
@@ -60,6 +61,15 @@ export const POST = async (request: Request) => {
           : undefined,
     },
   });
+
+  // Log variant creation
+  await logVariantCreated(
+    session.userId,
+    variant.id,
+    variant.sku,
+    variant.productId,
+    request
+  );
 
   return NextResponse.json({ data: variant }, { status: 201 });
 };

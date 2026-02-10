@@ -10,6 +10,7 @@ import {
   ShippingMethod,
 } from "@prisma/client";
 import { getRouteParam, RouteContext } from "@/lib/route-context";
+import { logOrderStatusUpdated, logOrderTrackingAdded } from "@/lib/audit";
 
 export const GET = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
@@ -121,6 +122,18 @@ export const PATCH = async (request: Request, context: RouteContext) => {
           status: shipmentStatus || undefined,
         } as Prisma.JsonObject,
       });
+
+      // Log tracking added
+      if (trackingNumber) {
+        await logOrderTrackingAdded(
+          session.userId,
+          order.id,
+          order.orderNumber,
+          trackingNumber,
+          ShippingCarrier.NOVA_POST,
+          request
+        );
+      }
     }
 
     const updatedOrder = Object.keys(data).length
@@ -144,6 +157,18 @@ export const PATCH = async (request: Request, context: RouteContext) => {
 
     return updatedOrder;
   });
+
+  // Log order status update if changed
+  if (body.status && body.status !== order.status) {
+    await logOrderStatusUpdated(
+      session.userId,
+      order.id,
+      order.orderNumber,
+      order.status,
+      body.status,
+      request
+    );
+  }
 
   return NextResponse.json({ data: updated });
 };

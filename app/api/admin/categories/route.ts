@@ -1,6 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
+import { logCategoryCreated } from "@/lib/audit";
 
 export const GET = async (request: Request) => {
   const session = await requireAdminSession(request);
@@ -36,6 +37,14 @@ export const POST = async (request: Request) => {
       isActive: typeof body.isActive === "boolean" ? body.isActive : undefined,
     },
   });
+
+  // Log category creation
+  await logCategoryCreated(
+    session.userId,
+    category.id,
+    category.name,
+    request
+  );
 
   return NextResponse.json({ data: category }, { status: 201 });
 };

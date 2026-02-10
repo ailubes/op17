@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { getRouteParam, RouteContext } from "@/lib/route-context";
 import { BackorderPolicy, CollectionStatus, SaleMode } from "@prisma/client";
+import { logCollectionUpdated, logCollectionDeleted } from "@/lib/audit";
 
 const parseDate = (value?: string | null) => {
   if (!value) {
@@ -94,23 +95,64 @@ export const PATCH = async (request: Request, context: RouteContext) => {
     return NextResponse.json({ error: "Invalid endsAt." }, { status: 400 });
   }
 
+  const data: Record<string, unknown> = {};
+  const changes: Record<string, { from: unknown; to: unknown }> = {};
+
+  if (body.name !== undefined && body.name !== existing.name) {
+    data.name = body.name.trim();
+    changes.name = { from: existing.name, to: data.name };
+  }
+  if (body.slug !== undefined && body.slug !== existing.slug) {
+    data.slug = body.slug.trim();
+    changes.slug = { from: existing.slug, to: data.slug };
+  }
+  if (body.description !== undefined && body.description !== existing.description) {
+    data.description = body.description.trim();
+    changes.description = { from: existing.description, to: data.description };
+  }
+  if (status !== existing.status) {
+    data.status = status;
+    changes.status = { from: existing.status, to: status };
+  }
+  if (saleMode !== existing.saleMode) {
+    data.saleMode = saleMode;
+    changes.saleMode = { from: existing.saleMode, to: saleMode };
+  }
+  if (body.startsAt !== undefined) {
+    const newStartsAt = body.startsAt ? startsAt : null;
+    if (newStartsAt !== existing.startsAt) {
+      data.startsAt = newStartsAt;
+      changes.startsAt = { from: existing.startsAt, to: newStartsAt };
+    }
+  }
+  if (body.endsAt !== undefined) {
+    const newEndsAt = body.endsAt ? endsAt : null;
+    if (newEndsAt !== existing.endsAt) {
+      data.endsAt = newEndsAt;
+      changes.endsAt = { from: existing.endsAt, to: newEndsAt };
+    }
+  }
+  if (body.isVisible !== undefined && body.isVisible !== existing.isVisible) {
+    data.isVisible = body.isVisible;
+    changes.isVisible = { from: existing.isVisible, to: data.isVisible };
+  }
+  if (body.backorderPolicy !== undefined && body.backorderPolicy !== existing.backorderPolicy) {
+    if (Object.values(BackorderPolicy).includes(body.backorderPolicy)) {
+      data.backorderPolicy = body.backorderPolicy;
+      changes.backorderPolicy = { from: existing.backorderPolicy, to: data.backorderPolicy };
+    }
+  }
+
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ data: existing });
+  }
+
   const updated = await prisma.collection.update({
     where: { id: existing.id },
-    data: {
-      name: typeof body.name === "string" ? body.name.trim() : undefined,
-      slug: typeof body.slug === "string" ? body.slug.trim() : undefined,
-      description: typeof body.description === "string" ? body.description.trim() : undefined,
-      status,
-      saleMode,
-      startsAt: body.startsAt ? startsAt : undefined,
-      endsAt: body.endsAt ? endsAt : undefined,
-      isVisible: typeof body.isVisible === "boolean" ? body.isVisible : undefined,
-      backorderPolicy:
-        body.backorderPolicy && Object.values(BackorderPolicy).includes(body.backorderPolicy)
-          ? body.backorderPolicy
-          : undefined,
-    },
+    data,
   });
+
+  await logCollectionUpdated(session.userId, id, updated.name, changes, request);
 
   return NextResponse.json({ data: updated });
 };
@@ -126,7 +168,15 @@ export const DELETE = async (request: Request, context: RouteContext) => {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
+  const collection = await prisma.collection.findUnique({ where: { id } });
+  if (!collection) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   await prisma.collection.delete({ where: { id } });
+
+  await logCollectionDeleted(session.userId, id, collection.name, request);
+
   return NextResponse.json({ ok: true });
 };
 

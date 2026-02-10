@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { PromoType } from "@prisma/client";
 import { generateBatchPromoCodes } from "@/lib/promo";
+import { logPromoCodeCreated } from "@/lib/audit";
 
 // Valid promo types
 const VALID_PROMO_TYPES: PromoType[] = ["PERCENT", "AMOUNT", "FREE_SHIPPING"];
@@ -61,10 +62,10 @@ export const POST = async (request: Request) => {
   }
 
   // Single code creation
-  return handleSingleCreate(body);
+  return handleSingleCreate(body, session.userId, request);
 };
 
-async function handleSingleCreate(body: Record<string, unknown>) {
+async function handleSingleCreate(body: Record<string, unknown>, actorId: string, request: Request) {
   // Validate required fields
   if (typeof body.code !== "string" || !body.code.trim()) {
     return NextResponse.json({ error: "Code is required" }, { status: 400 });
@@ -155,6 +156,9 @@ async function handleSingleCreate(body: Record<string, unknown>) {
         minSubtotalEur,
       },
     });
+
+    // Log promo code creation
+    await logPromoCodeCreated(actorId, promoCode.id, promoCode.code, request);
 
     return NextResponse.json({ data: promoCode }, { status: 201 });
   } catch (error) {
