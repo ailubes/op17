@@ -24,4 +24,4 @@ jobs:
             npm install
             npx prisma migrate deploy
             npm run build
-            pm2 reload op17
+            sudo pm2 reload op17
