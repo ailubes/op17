@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { OrderEventType, RefundStatus } from "@prisma/client";
 import { getRouteParam, RouteContext } from "@/lib/route-context";
+import { logRefundCreated } from "@/lib/audit";
 
 const sumRefunds = (refunds: { amountMinor: number; status: string }[]) => {
   return refunds
@@ -78,6 +79,17 @@ export const POST = async (request: Request, context: RouteContext) => {
       createdById: session.userId,
     },
   });
+
+  // Log refund creation
+  await logRefundCreated(
+    session.userId,
+    refund.id,
+    order.id,
+    order.orderNumber,
+    amountMinor,
+    payment.currency,
+    request
+  );
 
   return NextResponse.json({ data: refund }, { status: 201 });
 };

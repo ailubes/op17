@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { OrderEventType, OrderStatus, RefundStatus } from "@prisma/client";
 import { getRouteParam, RouteContext } from "@/lib/route-context";
+import { logRefundUpdated } from "@/lib/audit";
 
 const sumRefunds = (refunds: { amountMinor: number; status: string }[]) => {
   return refunds
@@ -85,6 +86,16 @@ export const PATCH = async (request: Request, context: RouteContext) => {
 
     return refund;
   });
+
+  // Log refund update
+  await logRefundUpdated(
+    session.userId,
+    updated.id,
+    existing.payment.orderId,
+    existing.payment.order.orderNumber,
+    { status: { from: existing.status, to: updated.status } },
+    request
+  );
 
   return NextResponse.json({ data: updated });
 };

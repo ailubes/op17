@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { OrderEventType } from "@prisma/client";
 import { getRouteParam, RouteContext } from "@/lib/route-context";
+import { logOrderNoteAdded } from "@/lib/audit";
 
 export const POST = async (request: Request, context: RouteContext) => {
   const session = await requireAdminSession(request);
@@ -35,6 +36,15 @@ export const POST = async (request: Request, context: RouteContext) => {
     },
     include: { createdBy: true },
   });
+
+  // Log order note added
+  await logOrderNoteAdded(
+    session.userId,
+    order.id,
+    order.orderNumber,
+    note,
+    request
+  );
 
   return NextResponse.json({ data: event }, { status: 201 });
 };

@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/guards";
 import { BackorderPolicy, CollectionStatus, SaleMode } from "@prisma/client";
+import { logCollectionCreated } from "@/lib/audit";
 
 const parseDate = (value?: string | null) => {
   if (!value) {
@@ -87,6 +88,8 @@ export const POST = async (request: Request) => {
           : undefined,
     },
   });
+
+  await logCollectionCreated(session.userId, collection.id, collection.name, request);
 
   return NextResponse.json({ data: collection }, { status: 201 });
 };
