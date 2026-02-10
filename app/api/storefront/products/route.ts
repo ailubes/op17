@@ -1,6 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getRequestLocale } from "@/lib/locale";
+import { getRequestLocale, normalizeLocale } from "@/lib/locale";
 import { getPublicObjectUrl } from "@/lib/s3";
 import { CollectionStatus, Locale, SaleMode } from "@prisma/client";
 
@@ -11,13 +11,19 @@ const toDbLocale = (locale: string) => {
 };
 
 export const GET = async (request: Request) => {
-  const locale = getRequestLocale(request);
+  const url = new URL(request.url);
+  const queryLocale = normalizeLocale(url.searchParams.get("locale"));
+  const locale = queryLocale || getRequestLocale(request);
   const dbLocale = toDbLocale(locale);
+  const featured = url.searchParams.get("featured") === "true";
+  const limit = parseInt(url.searchParams.get("limit") || "0", 10);
 
   const products = await prisma.product.findMany({
     where: {
       isActive: true,
+      ...(featured && { isFeatured: true }),
     },
+    ...(limit > 0 && { take: limit }),
     include: {
       category: {
         include: {
@@ -74,6 +80,7 @@ export const GET = async (request: Request) => {
 
       return {
         ...product,
+        slug: product.slug,
         name: translation?.name || product.name,
         description: translation?.description || product.description,
         type: translation?.type || product.type,
