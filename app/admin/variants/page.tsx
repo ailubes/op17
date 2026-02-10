@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 const BACKORDER_POLICIES = ["DISALLOW", "ALLOW"] as const;
+const LOW_STOCK_THRESHOLD = 5;
 
 type Product = {
   id: string;
@@ -42,6 +43,9 @@ export default function AdminVariants() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [bulkStockUpdates, setBulkStockUpdates] = useState<Record<string, string>>({});
+  const [savingBulk, setSavingBulk] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -120,6 +124,69 @@ export default function AdminVariants() {
     if (!confirm("Delete this variant?")) return;
     await fetch(`/api/admin/variants/${id}`, { method: "DELETE", credentials: "include" });
     loadData();
+  };
+
+  const handleBulkStockChange = (variantId: string, value: string) => {
+    setBulkStockUpdates((prev) => ({ ...prev, [variantId]: value }));
+  };
+
+  const adjustStock = (variantId: string, delta: number) => {
+    const variant = variants.find((v) => v.id === variantId);
+    if (!variant) return;
+    const currentValue = bulkStockUpdates[variantId] !== undefined
+      ? parseInt(bulkStockUpdates[variantId], 10)
+      : variant.stock;
+    const newValue = Math.max(0, currentValue + delta);
+    setBulkStockUpdates((prev) => ({ ...prev, [variantId]: newValue.toString() }));
+  };
+
+  const saveBulkStockUpdates = async () => {
+    setSavingBulk(true);
+    setError(null);
+
+    const updates = Object.entries(bulkStockUpdates)
+      .filter(([_, value]) => value !== "")
+      .map(([id, value]) => ({
+        id,
+        stock: parseInt(value, 10),
+      }));
+
+    if (updates.length === 0) {
+      setBulkEditMode(false);
+      setSavingBulk(false);
+      return;
+    }
+
+    try {
+      // Update each variant sequentially
+      for (const update of updates) {
+        if (Number.isNaN(update.stock)) continue;
+
+        const res = await fetch(`/api/admin/variants/${update.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stock: update.stock }),
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to update variant ${update.id}`);
+        }
+      }
+
+      setBulkStockUpdates({});
+      setBulkEditMode(false);
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bulk update failed");
+    } finally {
+      setSavingBulk(false);
+    }
+  };
+
+  const cancelBulkEdit = () => {
+    setBulkEditMode(false);
+    setBulkStockUpdates({});
   };
 
   const formTitle = useMemo(
@@ -254,43 +321,177 @@ export default function AdminVariants() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-bebas text-2xl">Existing Variants</h2>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-bebas text-2xl">Existing Variants</h2>
+          <div className="flex flex-wrap items-center gap-4">
+            {!bulkEditMode ? (
+              <button
+                onClick={() => setBulkEditMode(true)}
+                className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-gold transition"
+              >
+                Bulk Edit Stock
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={saveBulkStockUpdates}
+                  disabled={savingBulk}
+                  className="px-4 py-2 bg-gold text-slate-950 font-barlow font-bold uppercase tracking-wider text-xs hover:bg-white transition disabled:opacity-50"
+                >
+                  {savingBulk ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  onClick={cancelBulkEdit}
+                  disabled={savingBulk}
+                  className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-red-400 text-slate-400 hover:text-white transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                <span className="text-slate-400">Low stock (&lt; {LOW_STOCK_THRESHOLD})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                <span className="text-slate-400">In stock</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {bulkEditMode && (
+          <div className="bg-slate-900/60 border border-gold/30 p-4 text-sm">
+            <p className="text-slate-300">
+              <span className="text-gold font-semibold">Bulk Edit Mode:</span> Use the +/- buttons or type directly in the stock field to update multiple variants at once.
+            </p>
+          </div>
+        )}
+
         {loading ? (
           <p className="text-slate-400">Loading variants...</p>
         ) : (
           <div className="space-y-4">
-            {variants.map((variant) => (
-              <div
-                key={variant.id}
-                className="border border-white/10 bg-slate-900/40 p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div>
-                  <h3 className="font-bebas text-xl">{variant.sku}</h3>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                    {variant.product?.name || "No product"}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
-                    <span>Stock {variant.stock}</span>
-                    <span>•</span>
-                    <span>EUR {variant.priceEur ?? "—"}</span>
+            {variants.map((variant) => {
+              const isLowStock = variant.isActive && variant.stock < LOW_STOCK_THRESHOLD;
+              const isOutOfStock = variant.isActive && variant.stock === 0;
+              const hasStockChange = bulkStockUpdates[variant.id] !== undefined;
+
+              return (
+                <div
+                  key={variant.id}
+                  className={`border p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between transition ${
+                    isLowStock
+                      ? "border-red-500/30 bg-red-500/5"
+                      : hasStockChange
+                      ? "border-gold/30 bg-gold/5"
+                      : "border-white/10 bg-slate-900/40"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1">
+                      {isOutOfStock ? (
+                        <span className="flex h-3 w-3 rounded-full bg-red-600" title="Out of stock">
+                          <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
+                        </span>
+                      ) : isLowStock ? (
+                        <span className="flex h-3 w-3 rounded-full bg-red-500" title="Low stock">
+                          <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
+                        </span>
+                      ) : variant.isActive ? (
+                        <span className="h-3 w-3 rounded-full bg-green-500" title="In stock"></span>
+                      ) : (
+                        <span className="h-3 w-3 rounded-full bg-slate-600" title="Inactive"></span>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bebas text-xl">{variant.sku}</h3>
+                        {isLowStock && (
+                          <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">
+                            {isOutOfStock ? "Out of Stock" : "Low Stock"}
+                          </span>
+                        )}
+                        {!variant.isActive && (
+                          <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-slate-700 text-slate-400 border border-slate-600">
+                            Inactive
+                          </span>
+                        )}
+                        {hasStockChange && (
+                          <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-gold/20 text-gold border border-gold/30">
+                            Modified
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                        {variant.product?.name || "No product"}
+                        {variant.size && ` · Size ${variant.size}`}
+                        {variant.color && ` · ${variant.color}`}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                        {bulkEditMode ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => adjustStock(variant.id, -1)}
+                              className="w-8 h-8 flex items-center justify-center border border-white/10 hover:border-gold text-slate-400 hover:text-white transition"
+                              disabled={!variant.isActive}
+                            >
+                              −
+                            </button>
+                            <input
+                              type="number"
+                              min="0"
+                              value={bulkStockUpdates[variant.id] ?? variant.stock}
+                              onChange={(e) => handleBulkStockChange(variant.id, e.target.value)}
+                              disabled={!variant.isActive}
+                              className={`w-16 bg-slate-950 border px-2 py-1 text-center text-white focus:outline-none focus:border-gold disabled:opacity-50 ${
+                                hasStockChange ? "border-gold" : "border-white/10"
+                              }`}
+                            />
+                            <button
+                              onClick={() => adjustStock(variant.id, 1)}
+                              className="w-8 h-8 flex items-center justify-center border border-white/10 hover:border-gold text-slate-400 hover:text-white transition"
+                              disabled={!variant.isActive}
+                            >
+                              +
+                            </button>
+                            <span className="text-slate-500 ml-2">
+                              was {variant.stock}
+                            </span>
+                          </div>
+                        ) : (
+                          <>
+                            <span className={`${isLowStock ? "text-red-400 font-semibold" : "text-slate-400"}`}>
+                              Stock: {variant.stock}
+                            </span>
+                            <span className="text-slate-600">|</span>
+                            <span className="text-slate-400">EUR {variant.priceEur ?? "—"}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleEdit(variant)}
+                      disabled={bulkEditMode}
+                      className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-gold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => removeVariant(variant.id)}
+                      disabled={bulkEditMode}
+                      className="px-4 py-2 border border-red-500/40 text-xs uppercase tracking-[0.2em] text-red-300 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handleEdit(variant)}
-                    className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-gold"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => removeVariant(variant.id)}
-                    className="px-4 py-2 border border-red-500/40 text-xs uppercase tracking-[0.2em] text-red-300 hover:border-red-400"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

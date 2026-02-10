@@ -1,0 +1,27 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /var/www/op17.fit
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd .next/
+            npm install
+            npx prisma migrate deploy
+            npm run build
+            sudo /usr/local/bin/pm2-reload-op17

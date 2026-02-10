@@ -1,9 +1,11 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import { toastSuccess, toastError } from "@/components/admin";
 
 const BACKORDER_POLICIES = ["DISALLOW", "ALLOW"] as const;
+const ITEMS_PER_PAGE = 20;
 
 type Collection = {
   id: string;
@@ -56,6 +58,13 @@ const emptyForm = {
   backorderPolicy: "DISALLOW",
 };
 
+type PaginationData = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -67,10 +76,50 @@ export default function AdminProducts() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
 
-  const loadData = async () => {
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [collectionFilter, setCollectionFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [pagination, setPagination] = useState<PaginationData>({
+    page: 1,
+    limit: ITEMS_PER_PAGE,
+    total: 0,
+    totalPages: 0,
+  });
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPagination((prev) => ({ ...prev, page: 1 })); // Reset to page 1 on search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const loadData = useCallback(async () => {
     setLoading(true);
+
+    // Build query params
+    const params = new URLSearchParams();
+    params.set("page", pagination.page.toString());
+    params.set("limit", pagination.limit.toString());
+    if (debouncedSearch.trim()) {
+      params.set("search", debouncedSearch.trim());
+    }
+    if (statusFilter !== "all") {
+      params.set("status", statusFilter);
+    }
+    if (collectionFilter) {
+      params.set("collectionId", collectionFilter);
+    }
+    if (categoryFilter) {
+      params.set("categoryId", categoryFilter);
+    }
+
     const [productsRes, collectionsRes, categoriesRes] = await Promise.all([
-      fetch("/api/admin/products", { credentials: "include" }),
+      fetch(`/api/admin/products?${params.toString()}`, { credentials: "include" }),
       fetch("/api/admin/collections", { credentials: "include" }),
       fetch("/api/admin/categories", { credentials: "include" }),
     ]);
@@ -86,14 +135,15 @@ export default function AdminProducts() {
     const categoriesData = categoriesRes.ok ? await categoriesRes.json() : { data: [] };
 
     setProducts(productsData.data || []);
+    setPagination(productsData.pagination || pagination);
     setCollections(collectionsData.data || []);
     setCategories(categoriesData.data || []);
     setLoading(false);
-  };
+  }, [pagination.page, pagination.limit, debouncedSearch, statusFilter, collectionFilter, categoryFilter]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const resetForm = () => {
     setForm({ ...emptyForm });
@@ -139,10 +189,13 @@ export default function AdminProducts() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      setError(data?.error || "Save failed.");
+      const errorMsg = data?.error || "Save failed.";
+      setError(errorMsg);
+      toastError(errorMsg);
       return;
     }
 
+    toastSuccess(editingId ? "Product updated successfully" : "Product created successfully");
     resetForm();
     loadData();
   };
@@ -234,10 +287,15 @@ export default function AdminProducts() {
     clearUploadError(productId);
   };
 
-  const removeProduct = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
-    await fetch(`/api/admin/products/${id}`, { method: "DELETE", credentials: "include" });
-    loadData();
+  const removeProduct = async (id: string, productName: string) => {
+    if (!confirm(`Delete "${productName}"? This cannot be undone.`)) return;
+    const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE", credentials: "include" });
+    if (res.ok) {
+      toastSuccess(`"${productName}" deleted successfully`);
+      loadData();
+    } else {
+      toastError("Failed to delete product");
+    }
   };
 
   const formTitle = useMemo(
@@ -404,43 +462,182 @@ export default function AdminProducts() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-bebas text-2xl">Existing Products</h2>
+        {/* Search and Filters */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="font-bebas text-2xl">Existing Products</h2>
+            <p className="text-sm text-slate-400">
+              Showing {products.length} of {pagination.total} products
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[250px] max-w-md">
+              <input
+                type="text"
+                placeholder="Search by name or slug..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-900 border border-white/10 px-4 py-2 pl-10 text-white text-sm focus:outline-none focus:border-gold"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+              className="bg-slate-900 border border-white/10 px-4 py-2 text-white text-sm"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="featured">Featured</option>
+            </select>
+
+            {/* Collection Filter */}
+            <select
+              value={collectionFilter}
+              onChange={(e) => {
+                setCollectionFilter(e.target.value);
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+              className="bg-slate-900 border border-white/10 px-4 py-2 text-white text-sm"
+            >
+              <option value="">All Collections</option>
+              <option value="none">Always-on (no collection)</option>
+              {collections.map((collection) => (
+                <option key={collection.id} value={collection.id}>
+                  {collection.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Category Filter */}
+            <select
+              value={categoryFilter}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+              className="bg-slate-900 border border-white/10 px-4 py-2 text-white text-sm"
+            >
+              <option value="">All Categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Clear Filters */}
+            {(searchQuery || statusFilter !== "all" || collectionFilter || categoryFilter) && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                  setCollectionFilter("");
+                  setCategoryFilter("");
+                  setPagination((prev) => ({ ...prev, page: 1 }));
+                }}
+                className="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-gold"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        </div>
+
         {loading ? (
           <p className="text-slate-400">Loading products...</p>
+        ) : products.length === 0 ? (
+          <div className="text-center py-12 border border-white/10 bg-slate-900/40">
+            <p className="text-slate-400 mb-2">No products found</p>
+            <p className="text-sm text-slate-500">
+              {searchQuery ? "Try adjusting your search or filters" : "Create your first product above"}
+            </p>
+          </div>
         ) : (
-          <div className="space-y-4">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="border border-white/10 bg-slate-900/40 p-4 flex flex-col gap-4"
-              >
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h3 className="font-bebas text-xl">{product.name}</h3>
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{product.slug}</p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
-                      <span>EUR {product.basePriceEur}</span>
-                      <span>•</span>
-                      <span>{product.collection?.name || "Always-on"}</span>
-                      <span>•</span>
-                      <span>{product.variants?.length ?? 0} variants</span>
+          <>
+            <div className="space-y-4">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className={`border p-4 flex flex-col gap-4 transition ${
+                    product.isActive ? "border-white/10 bg-slate-900/40" : "border-slate-700 bg-slate-900/20 opacity-70"
+                  }`}
+                >
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bebas text-xl">{product.name}</h3>
+                        {!product.isActive && (
+                          <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-slate-700 text-slate-400">
+                            Inactive
+                          </span>
+                        )}
+                        {product.isFeatured && (
+                          <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-gold/20 text-gold border border-gold/30">
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{product.slug}</p>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
+                        <span>EUR {product.basePriceEur}</span>
+                        <span>•</span>
+                        <span>{product.collection?.name || "Always-on"}</span>
+                        <span>•</span>
+                        <span>{product.variants?.length ?? 0} variants</span>
+                        {product.category && (
+                          <>
+                            <span>•</span>
+                            <span>{product.category.name}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleEdit(product)}
+                        className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-gold"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => removeProduct(product.id, product.name)}
+                        className="px-4 py-2 border border-red-500/40 text-xs uppercase tracking-[0.2em] text-red-300 hover:border-red-400"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleEdit(product)}
-                      className="px-4 py-2 border border-white/10 text-xs uppercase tracking-[0.2em] hover:border-gold"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => removeProduct(product.id)}
-                      className="px-4 py-2 border border-red-500/40 text-xs uppercase tracking-[0.2em] text-red-300 hover:border-red-400"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
 
                 <div className="border-t border-white/10 pt-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -497,7 +694,57 @@ export default function AdminProducts() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                <p className="text-sm text-slate-400">
+                  Page {pagination.page} of {pagination.totalPages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
+                    disabled={pagination.page <= 1}
+                    className="px-3 py-2 border border-white/10 text-sm hover:border-gold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                    .filter(
+                      (page) =>
+                        page === 1 ||
+                        page === pagination.totalPages ||
+                        (page >= pagination.page - 1 && page <= pagination.page + 1)
+                    )
+                    .map((page, index, array) => (
+                      <div key={page} className="flex items-center gap-2">
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="text-slate-500">...</span>
+                        )}
+                        <button
+                          onClick={() => setPagination((prev) => ({ ...prev, page }))}
+                          className={`w-10 h-10 text-sm font-medium transition ${
+                            page === pagination.page
+                              ? "bg-gold text-slate-950"
+                              : "border border-white/10 hover:border-gold text-white"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      </div>
+                    ))}
+                  <button
+                    onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
+                    disabled={pagination.page >= pagination.totalPages}
+                    className="px-3 py-2 border border-white/10 text-sm hover:border-gold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

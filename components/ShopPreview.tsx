@@ -2,30 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useLocale } from "@/lib/use-locale";
 import type { HomeMessages } from "@/lib/i18n";
 
 interface Product {
   id: string;
-  slug: string;
   name: string;
+  slug: string;
   basePriceEur: number;
+  media?: { id: string; url?: string | null; alt?: string | null }[];
+  variants: { id: string; stock: number; priceEur?: number | null; isBackorderEnabled?: boolean }[];
   category?: { id: string; name: string } | null;
-  media: Array<{
-    id: string;
-    url: string;
-    alt?: string | null;
-  }>;
-  variants?: Array<{
-    id: string;
-    sku: string;
-    stock: number;
-    isBackorderEnabled: boolean;
-  }>;
-}
-
-interface ProductsResponse {
-  data: Product[];
 }
 
 type ShopPreviewProps = {
@@ -38,45 +24,47 @@ export const ShopPreview: React.FC<ShopPreviewProps> = ({ copy }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const locale = useLocale();
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const loadProducts = async () => {
       try {
         setError(null);
-        // First try to fetch featured products
-        let response = await fetch(
-          `/api/storefront/products?featured=true&limit=3&locale=${locale}`
-        );
-        if (response.ok) {
-          const data: ProductsResponse = await response.json();
-          if (data.data.length > 0) {
-            setProducts(data.data);
-          } else {
-            // If no featured products, fetch the 3 most recent products
-            response = await fetch(
-              `/api/storefront/products?limit=3&locale=${locale}`
-            );
-            if (response.ok) {
-              const recentData: ProductsResponse = await response.json();
-              setProducts(recentData.data.slice(0, 3));
-            } else {
-              setError(copy.error || "Failed to load products");
-            }
-          }
-        } else {
+        const res = await fetch("/api/storefront/products?limit=3");
+        if (!res.ok) {
           setError(copy.error || "Failed to load products");
+          setLoading(false);
+          return;
         }
-      } catch (err) {
-        console.error("Failed to fetch products:", err);
+        const data = await res.json();
+        // Show first 3 products only
+        setProducts((data.data || []).slice(0, 3));
+      } catch {
         setError(copy.error || "Failed to load products");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
-  }, [locale, copy.error]);
+    loadProducts();
+  }, [copy.error]);
+
+  // Show placeholder products from i18n if no real products loaded yet
+  const displayProducts = products.length > 0
+    ? products.map((p) => ({
+        id: p.id,
+        title: p.name,
+        price: `EUR ${p.variants?.[0]?.priceEur ?? p.basePriceEur}`,
+        image: p.media?.[0]?.url,
+        slug: p.slug,
+        inStock: p.variants?.some((v) => v.stock > 0) ?? false,
+        category: p.category?.name,
+      }))
+    : [];
+
+  // Don't render section if no products and not loading
+  if (!loading && displayProducts.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-32 px-6 md:px-14 container mx-auto">
@@ -97,47 +85,64 @@ export const ShopPreview: React.FC<ShopPreviewProps> = ({ copy }) => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {loading ? (
-          // Loading skeleton - matches shop page card style
-          <>
-            {[1, 2, 3].map((i) => (
-              <div key={`skeleton-${i}`} className="group">
-                <div className="relative aspect-[4/5] overflow-hidden bg-slate-800 border border-white/10 mb-4 animate-pulse" />
-                <div className="h-6 bg-slate-800/50 mb-2 animate-pulse w-3/4 mx-auto" />
-                <div className="h-8 bg-slate-800/50 animate-pulse w-24 mx-auto" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {loading
+          ? (
+            // Loading skeleton
+            Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-slate-900 border border-white/5 p-6 animate-pulse"
+              >
+                <div className="aspect-square bg-slate-800/50 mb-6"></div>
+                <div className="h-8 bg-slate-800/50 mb-4 w-3/4"></div>
+                <div className="flex justify-between">
+                  <div className="h-8 bg-slate-800/50 w-20"></div>
+                  <div className="h-10 bg-slate-800/50 w-24"></div>
+                </div>
               </div>
-            ))}
-          </>
-        ) : error ? (
-          <div className="col-span-full text-center py-12">
-            <p className="text-slate-400 font-inter">{error}</p>
-          </div>
-        ) : (
-          products.map((product) => (
-            <ProductCard key={product.id} product={product} copy={copy} />
-          ))
-        )}
+            ))
+          )
+          : error ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-slate-400 font-inter">{error}</p>
+            </div>
+          )
+          : displayProducts.length > 0
+          ? (
+            displayProducts.map((product) => (
+              <ProductCard key={product.id} product={product} copy={copy} />
+            ))
+          )
+          : null}
       </div>
     </section>
   );
 };
 
+interface DisplayProduct {
+  id: string;
+  title: string;
+  price: string;
+  image?: string | null;
+  slug: string;
+  inStock: boolean;
+  category?: string;
+}
+
 const ProductCard: React.FC<{
-  product: Product;
+  product: DisplayProduct;
   copy: HomeMessages["shopPreview"];
 }> = ({ product, copy }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
-  const heroMedia = product.media?.[0];
-  const heroImage = heroMedia?.url || null;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isAdding) return;
+    if (isAdding || !product.inStock) return;
 
     setIsAdding(true);
     setAddSuccess(false);
@@ -148,7 +153,7 @@ const ProductCard: React.FC<{
       if (!response.ok) throw new Error("Failed to fetch product details");
 
       const data = await response.json();
-      const productData = data.data?.[0];
+      const productData = data.data;
 
       if (!productData?.variants?.length) {
         throw new Error("No variants available");
@@ -156,7 +161,7 @@ const ProductCard: React.FC<{
 
       // Find first available variant (in stock or backorder enabled)
       const availableVariant = productData.variants.find(
-        (v: { stock: number; isBackorderEnabled: boolean }) => v.stock > 0 || v.isBackorderEnabled
+        (v: { stock: number; isBackorderEnabled?: boolean }) => v.stock > 0 || v.isBackorderEnabled
       );
 
       if (!availableVariant) {
@@ -191,34 +196,40 @@ const ProductCard: React.FC<{
   return (
     <Link
       href={`/shop/${product.slug}`}
-      className="group block"
+      className="reveal opacity-0 translate-y-10 transition-all duration-1000 bg-slate-900 border border-white/5 p-6 group relative overflow-hidden flex flex-col hover:border-gold/30"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-slate-800 border border-white/10 mb-4">
-        {heroImage ? (
-          <>
+      {/* Hover bar */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gold scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500">
+      </div>
+
+      <div className="aspect-square bg-slate-800/50 mb-6 flex items-center justify-center relative overflow-hidden">
+        {product.image
+          ? (
             <img
-              src={heroImage}
-              alt={heroMedia?.alt || product.name}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-              loading="lazy"
+              src={product.image}
+              alt={product.title}
+              className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-700"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/40 to-transparent"></div>
-          </>
-        ) : (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-bebas text-3xl text-slate-500 text-center px-4">{product.name}</span>
+          )
+          : (
+            <div className="flex items-center justify-center">
+              <span className="font-bebas text-4xl text-slate-600">
+                {product.title.charAt(0)}
+              </span>
             </div>
-          </>
+          )}
+        {!product.inStock && (
+          <div className="absolute inset-0 bg-slate-950/80 flex items-center justify-center">
+            <span className="font-bebas text-xl text-slate-400">Sold Out</span>
+          </div>
         )}
 
         {/* Hover overlay with button */}
         <div
           className={`absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent transition-all duration-300 ${
-            isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            isHovered && product.inStock ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
           <button
@@ -239,16 +250,15 @@ const ProductCard: React.FC<{
         </div>
       </div>
 
-      <div className="text-center">
-        <span className="font-barlow text-ukraine-blue text-xs uppercase tracking-widest">
-          {product.category?.name || copy.fallbackCategory || "Gear"}
+      <span className="font-barlow text-ukraine-blue text-xs uppercase tracking-widest mb-2">
+        {product.category || copy.fallbackCategory || "Gear"}
+      </span>
+      <h3 className="font-barlow font-bold text-2xl uppercase mb-4">{product.title}</h3>
+      <div className="flex justify-between items-center mt-auto">
+        <span className="font-bebas text-3xl text-gold">{product.price}</span>
+        <span className="px-4 py-2 border border-gold text-gold font-barlow font-bold uppercase group-hover:bg-gold group-hover:text-slate-950 transition-all">
+          {copy.addButton}
         </span>
-        <h3 className="font-bebas text-xl text-white mt-1 group-hover:text-gold transition-colors">
-          {product.name}
-        </h3>
-        <div className="flex items-center justify-center gap-2 mt-2">
-          <span className="font-bebas text-2xl text-gold">{formatPrice(product.basePriceEur)}</span>
-        </div>
       </div>
     </Link>
   );

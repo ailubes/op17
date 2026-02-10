@@ -1,0 +1,6 @@
+# robots.txt for op17.fit
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://op17.fit/sitemap.xml

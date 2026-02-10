@@ -3,6 +3,7 @@ import { Prisma, Currency, OrderEventType, PaymentProvider, PaymentStatus, Shipp
 import { prisma } from "@/lib/prisma";
 import { getOrCreateCart } from "@/lib/cart";
 import { convertFromEur, toMinorUnits } from "@/lib/pricing";
+import { validatePromoCode } from "@/lib/promo";
 import { randomBytes } from "crypto";
 
 const generateOrderNumber = () => {
@@ -70,7 +71,22 @@ export const POST = async (request: Request) => {
     (sum, item) => sum + item.unitPriceEur * item.quantity,
     0
   );
-  const discountEur = 0;
+
+  // Validate and apply promo code if provided
+  let discountEur = 0;
+  let promoCodeRecord = null;
+
+  if (body.promoCode && typeof body.promoCode === "string") {
+    const validation = await validatePromoCode(body.promoCode.trim(), subtotalEur);
+
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.message }, { status: 400 });
+    }
+
+    promoCodeRecord = validation.promoCode;
+    discountEur = validation.discountEur;
+  }
+
   const shippingEur = 0;
   const totalEur = subtotalEur - discountEur + shippingEur;
 
@@ -146,6 +162,7 @@ export const POST = async (request: Request) => {
           totalMinor,
           shippingAddressId: address.id,
           shippingMethod,
+          promoCodeId: promoCodeRecord?.id ?? undefined,
         },
       });
 
@@ -182,9 +199,19 @@ export const POST = async (request: Request) => {
         data: {
           orderId: created.id,
           type: OrderEventType.ORDER_CREATED,
-          message: "Order created",
+          message: promoCodeRecord
+            ? `Order created with promo code: ${promoCodeRecord.code} (${discountEur} EUR discount)`
+            : "Order created",
         },
       });
+
+      // Increment promo code redemption counter
+      if (promoCodeRecord) {
+        await tx.promoCode.update({
+          where: { id: promoCodeRecord.id },
+          data: { timesRedeemed: { increment: 1 } },
+        });
+      }
 
       for (const item of cartWithItems.items) {
         const policy = resolveBackorderPolicy(item.variant, item.variant.product);
