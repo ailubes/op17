@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getMessages } from "@/lib/i18n";
-import { setClientLocale } from "@/lib/locale";
 import { useLocale } from "@/lib/use-locale";
+import { ShopHeader, ShopFooter } from "@/components/shop";
+import { PromoCodeInput } from "@/components/shop/PromoCodeInput";
 
 const CURRENCIES = ["EUR", "USD", "UAH"] as const;
 const SHIPPING_METHODS = ["NOVA_POST_BRANCH", "NOVA_POST_COURIER"] as const;
@@ -49,20 +50,16 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [paymentRedirecting, setPaymentRedirecting] = useState(false);
-  const [activeLocale, setActiveLocale] = useState(locale);
 
-  useEffect(() => {
-    setActiveLocale(locale);
-  }, [locale]);
-
-  const changeLocale = (nextLocale: "en" | "uk" | "it") => {
-    if (nextLocale === activeLocale) return;
-    setClientLocale(nextLocale);
-    setActiveLocale(nextLocale);
-    if (typeof window !== "undefined") {
-      window.location.reload();
-    }
-  };
+  const [promoCode, setPromoCode] = useState("");
+  const [promoValidation, setPromoValidation] = useState<{
+    valid: boolean;
+    code?: string;
+    discountEur?: number;
+    message?: string;
+    error?: string;
+  } | null>(null);
+  const [validatingPromo, setValidatingPromo] = useState(false);
 
   const [form, setForm] = useState({
     email: "",
@@ -103,6 +100,9 @@ export default function CheckoutPage() {
     return cart.items.reduce((sum, item) => sum + item.unitPriceEur * item.quantity, 0);
   }, [cart]);
 
+  const discount = promoValidation?.valid ? promoValidation.discountEur || 0 : 0;
+  const total = subtotal - discount;
+
   const availableProviders = useMemo(() => {
     if (form.currency === "UAH") return PAYMENT_PROVIDERS;
     return PAYMENT_PROVIDERS.filter((provider) => provider === "LIQPAY");
@@ -113,6 +113,29 @@ export default function CheckoutPage() {
       setForm((prev) => ({ ...prev, provider: "LIQPAY" }));
     }
   }, [form.currency, form.provider]);
+
+  const handleValidatePromo = async () => {
+    if (!promoCode.trim()) return;
+
+    setValidatingPromo(true);
+    setPromoValidation(null);
+
+    const res = await fetch("/api/promo-codes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: promoCode.trim() }),
+      credentials: "include",
+    });
+
+    const data = await res.json();
+    setPromoValidation(data);
+    setValidatingPromo(false);
+  };
+
+  const handleRemovePromo = () => {
+    setPromoCode("");
+    setPromoValidation(null);
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -130,6 +153,7 @@ export default function CheckoutPage() {
       currency: form.currency,
       shippingMethod: form.shippingMethod,
       provider: form.provider,
+      promoCode: promoValidation?.valid ? promoCode.trim() : undefined,
       shippingAddress: {
         name: form.name,
         phone: form.phone,
@@ -236,43 +260,12 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-white/10 bg-slate-950/95">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link href="/shop" className="font-bebas text-3xl tracking-widest">
-            OP17 Checkout
-          </Link>
-          <div className="flex items-center gap-4">
-            <div
-              className="hidden sm:flex items-center gap-2 border border-white/10 bg-slate-900/60 px-2 py-1"
-              suppressHydrationWarning
-            >
-              {[
-                { label: "EN", value: "en" },
-                { label: "UK", value: "uk" },
-                { label: "IT", value: "it" },
-              ].map((item) => (
-                <button
-                  key={item.value}
-                  onClick={() => changeLocale(item.value as "en" | "uk" | "it")}
-                  className={`px-2 py-1 text-[11px] font-barlow font-bold uppercase tracking-[0.2em] transition-colors ${
-                    activeLocale === item.value
-                      ? "bg-gold text-slate-950"
-                      : "text-slate-300 hover:text-white"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <Link
-              href="/shop/cart"
-              className="text-sm uppercase tracking-[0.2em] text-slate-400 hover:text-gold"
-            >
-              {t.checkout.backToCart}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <ShopHeader
+        variant="simple"
+        title="Checkout"
+        backHref="/shop/cart"
+        backLabel={t.checkout.backToCart}
+      />
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         <h1 className="font-bebas text-5xl mb-6">{t.checkout.title}</h1>
@@ -421,6 +414,18 @@ export default function CheckoutPage() {
                 )}
               </section>
 
+              <section className="border border-white/10 bg-slate-900/60 p-6">
+                <PromoCodeInput
+                  value={promoCode}
+                  onChange={setPromoCode}
+                  validation={promoValidation}
+                  onValidate={handleValidatePromo}
+                  onRemove={handleRemovePromo}
+                  loading={validatingPromo}
+                  t={t.checkout}
+                />
+              </section>
+
               <button
                 type="submit"
                 disabled={submitting}
@@ -447,75 +452,27 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-6 border-t border-white/10 pt-4 flex items-center justify-between">
-                <span className="font-bebas text-2xl">{t.cart.total}</span>
-                <span className="font-bebas text-3xl text-gold">{formatCurrency(subtotal, "EUR")}</span>
+              <div className="mt-6 border-t border-white/10 pt-4 space-y-2">
+                <div className="flex items-center justify-between text-sm text-slate-300">
+                  <span>{t.checkout.subtotal}</span>
+                  <span>{formatCurrency(subtotal, "EUR")}</span>
+                </div>
+                {promoValidation?.valid && promoValidation.discountEur && promoValidation.discountEur > 0 && (
+                  <div className="flex items-center justify-between text-sm text-green-400">
+                    <span>{t.checkout.discount}</span>
+                    <span>-{formatCurrency(promoValidation.discountEur, "EUR")}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                  <span className="font-bebas text-2xl">{t.cart.total}</span>
+                  <span className="font-bebas text-3xl text-gold">{formatCurrency(total, "EUR")}</span>
+                </div>
               </div>
             </aside>
           </div>
         )}
       </main>
-      <footer className="border-t border-white/10 bg-slate-950">
-        <div className="container mx-auto px-6 md:px-14 py-14">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div>
-              <Link href="/" className="inline-flex items-center gap-3 group">
-                <img
-                  src="/images/logos/blue-yellow.png"
-                  alt="Oleh Plotnytskyi OP17 logo"
-                  className="h-10 w-auto transition-transform group-hover:scale-105"
-                />
-                <span className="sr-only">OP17</span>
-              </Link>
-              <p className="mt-4 text-slate-400 text-sm max-w-xs">{t.footer.tagline}</p>
-            </div>
-            <div>
-              <h4 className="font-barlow font-bold uppercase tracking-widest mb-4 text-white">
-                {t.footer.shopLinks}
-              </h4>
-              <ul className="space-y-3 text-sm text-slate-400">
-                <li>
-                  <Link href="/shop" className="hover:text-gold transition-colors">
-                    {t.footer.shopHome}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/shop/cart" className="hover:text-gold transition-colors">
-                    {t.footer.cart}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/shop/checkout" className="hover:text-gold transition-colors">
-                    {t.footer.checkout}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/shop/payment-status" className="hover:text-gold transition-colors">
-                    {t.footer.paymentStatus}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-barlow font-bold uppercase tracking-widest mb-4 text-white">
-                {t.footer.support}
-              </h4>
-              <ul className="space-y-3 text-sm text-slate-400">
-                <li>{t.footer.shipping}</li>
-                <li>{t.footer.payments}</li>
-                <li>{t.footer.supportEmail}</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-10 mt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-            <p>
-              &copy; {new Date().getFullYear()} Plotnytskyi Collection. {t.footer.rights}
-            </p>
-            <p className="uppercase tracking-[0.2em] text-slate-600">{t.footer.official}</p>
-          </div>
-        </div>
-      </footer>
+      <ShopFooter t={t.footer} />
     </div>
   );
 }

@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getMessages } from "@/lib/i18n";
-import { setClientLocale } from "@/lib/locale";
 import { useLocale } from "@/lib/use-locale";
+import { ShopHeader, ShopFooter } from "@/components/shop";
 
 interface Variant {
   id: string;
@@ -19,6 +19,7 @@ interface Variant {
 interface Product {
   id: string;
   name: string;
+  slug: string;
   category?: { id: string; name: string } | null;
   basePriceEur: number;
   description?: string | null;
@@ -49,20 +50,6 @@ const Shop: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [cartCount, setCartCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [activeLocale, setActiveLocale] = useState(locale);
-
-  useEffect(() => {
-    setActiveLocale(locale);
-  }, [locale]);
-
-  const changeLocale = (nextLocale: "en" | "uk" | "it") => {
-    if (nextLocale === activeLocale) return;
-    setClientLocale(nextLocale);
-    setActiveLocale(nextLocale);
-    if (typeof window !== "undefined") {
-      window.location.reload();
-    }
-  };
 
   const loadProducts = async () => {
     setLoading(true);
@@ -136,62 +123,13 @@ const Shop: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-white/10">
-        <div className="container mx-auto px-6 md:px-14 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <img
-              src="/images/logos/blue-yellow.png"
-              alt="Oleh Plotnytskyi OP17 logo"
-              className="h-10 md:h-12 w-auto transition-transform group-hover:scale-105"
-            />
-            <span className="sr-only">OP17</span>
-          </Link>
-
-          <div className="flex items-center gap-6">
-            <div
-              className="hidden sm:flex items-center gap-2 border border-white/10 bg-slate-900/60 px-2 py-1"
-              suppressHydrationWarning
-            >
-              {[
-                { label: "EN", value: "en" },
-                { label: "UK", value: "uk" },
-                { label: "IT", value: "it" },
-              ].map((item) => (
-                <button
-                  key={item.value}
-                  onClick={() => changeLocale(item.value as "en" | "uk" | "it")}
-                  className={`px-2 py-1 text-[11px] font-barlow font-bold uppercase tracking-[0.2em] transition-colors ${
-                    activeLocale === item.value
-                      ? "bg-gold text-slate-950"
-                      : "text-slate-300 hover:text-white"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <Link
-              href="/"
-              className="font-barlow font-semibold text-slate-400 hover:text-white transition-colors uppercase tracking-wider text-sm"
-            >
-              {t.shop.backToHome}
-            </Link>
-            <Link
-              href="/shop/cart"
-              className="relative p-2 text-white hover:text-gold transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-gold text-slate-950 text-xs font-bold rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <ShopHeader
+        variant="full"
+        backHref="/"
+        backLabel={t.shop.backToHome}
+        showCart
+        cartCount={cartCount}
+      />
 
       <section className="pt-32 pb-16 bg-gradient-to-b from-slate-900 to-slate-950 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -290,67 +228,7 @@ const Shop: React.FC = () => {
         </div>
       </section>
 
-      <footer className="border-t border-white/10 bg-slate-950">
-        <div className="container mx-auto px-6 md:px-14 py-14">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div>
-              <Link href="/" className="inline-flex items-center gap-3 group">
-                <img
-                  src="/images/logos/blue-yellow.png"
-                  alt="Oleh Plotnytskyi OP17 logo"
-                  className="h-10 w-auto transition-transform group-hover:scale-105"
-                />
-                <span className="sr-only">OP17</span>
-              </Link>
-              <p className="mt-4 text-slate-400 text-sm max-w-xs">{t.footer.tagline}</p>
-            </div>
-            <div>
-              <h4 className="font-barlow font-bold uppercase tracking-widest mb-4 text-white">
-                {t.footer.shopLinks}
-              </h4>
-              <ul className="space-y-3 text-sm text-slate-400">
-                <li>
-                  <Link href="/shop" className="hover:text-gold transition-colors">
-                    {t.footer.shopHome}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/shop/cart" className="hover:text-gold transition-colors">
-                    {t.footer.cart}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/shop/checkout" className="hover:text-gold transition-colors">
-                    {t.footer.checkout}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/shop/payment-status" className="hover:text-gold transition-colors">
-                    {t.footer.paymentStatus}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-barlow font-bold uppercase tracking-widest mb-4 text-white">
-                {t.footer.support}
-              </h4>
-              <ul className="space-y-3 text-sm text-slate-400">
-                <li>{t.footer.shipping}</li>
-                <li>{t.footer.payments}</li>
-                <li>{t.footer.supportEmail}</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-10 mt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-            <p>
-              &copy; {new Date().getFullYear()} Plotnytskyi Collection. {t.footer.rights}
-            </p>
-            <p className="uppercase tracking-[0.2em] text-slate-600">{t.footer.official}</p>
-          </div>
-        </div>
-      </footer>
+      <ShopFooter t={t.footer} />
     </div>
   );
 };
@@ -382,66 +260,75 @@ const ProductCard: React.FC<{
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-slate-800 border border-white/10 mb-4">
-        {heroImage ? (
-          <>
-            <img
-              src={heroImage}
-              alt={heroMedia?.alt || product.name}
-              className="absolute inset-0 h-full w-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/40 to-transparent"></div>
-          </>
-        ) : (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-bebas text-3xl text-slate-500">{product.name}</span>
-            </div>
-          </>
-        )}
-
-        {!available && (
-          <div className="absolute inset-0 bg-slate-950/80 flex items-center justify-center">
-            <span className="font-bebas text-2xl text-slate-400">{labels.soldOut}</span>
-          </div>
-        )}
-
-        {product.variants.length > 0 && (
-          <div
-            className={`absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent transition-all duration-300 ${
-              isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-          >
-            {product.variants.some((variant) => variant.size) && (
-              <div className="flex gap-2 mb-3 justify-center flex-wrap">
-                {product.variants.map((variant) => (
-                  <button
-                    key={variant.id}
-                    onClick={() => setSelectedVariantId(variant.id)}
-                    className={`w-9 h-9 font-barlow font-bold text-xs transition-all ${
-                      selectedVariantId === variant.id
-                        ? "bg-gold text-slate-950"
-                        : "bg-slate-700 text-white hover:bg-slate-600"
-                    }`}
-                  >
-                    {variant.size || "One"}
-                  </button>
-                ))}
+      <Link href={`/shop/${product.slug}`} className="block">
+        <div className="relative aspect-[4/5] overflow-hidden bg-slate-800 border border-white/10 mb-4">
+          {heroImage ? (
+            <>
+              <img
+                src={heroImage}
+                alt={heroMedia?.alt || product.name}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/40 to-transparent"></div>
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="font-bebas text-3xl text-slate-500">{product.name}</span>
               </div>
-            )}
-            <button
-              onClick={() => onAddToCart(product, selectedVariant || undefined)}
-              className="w-full py-3 bg-gold text-slate-950 font-barlow font-bold uppercase tracking-wider text-sm hover:bg-white transition-colors"
-            >
-              {labels.addToCart}
-            </button>
-          </div>
-        )}
-      </div>
+            </>
+          )}
 
-      <div className="text-center">
+          {!available && (
+            <div className="absolute inset-0 bg-slate-950/80 flex items-center justify-center">
+              <span className="font-bebas text-2xl text-slate-400">{labels.soldOut}</span>
+            </div>
+          )}
+
+          {product.variants.length > 0 && (
+            <div
+              onClick={(e) => e.preventDefault()}
+              className={`absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent transition-all duration-300 ${
+                isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+              }`}
+            >
+              {product.variants.some((variant) => variant.size) && (
+                <div className="flex gap-2 mb-3 justify-center flex-wrap">
+                  {product.variants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSelectedVariantId(variant.id);
+                      }}
+                      className={`w-9 h-9 font-barlow font-bold text-xs transition-all ${
+                        selectedVariantId === variant.id
+                          ? "bg-gold text-slate-950"
+                          : "bg-slate-700 text-white hover:bg-slate-600"
+                      }`}
+                    >
+                      {variant.size || "One"}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onAddToCart(product, selectedVariant || undefined);
+                }}
+                className="w-full py-3 bg-gold text-slate-950 font-barlow font-bold uppercase tracking-wider text-sm hover:bg-white transition-colors"
+              >
+                {labels.addToCart}
+              </button>
+            </div>
+          )}
+        </div>
+      </Link>
+
+      <Link href={`/shop/${product.slug}`} className="block text-center">
         <span className="font-barlow text-ukraine-blue text-xs uppercase tracking-widest">
           {product.category?.name || labels.uncategorized}
         </span>
@@ -451,7 +338,7 @@ const ProductCard: React.FC<{
         <div className="flex items-center justify-center gap-2 mt-2">
           <span className="font-bebas text-2xl text-gold">{formatPrice(price)}</span>
         </div>
-      </div>
+      </Link>
     </div>
   );
 };

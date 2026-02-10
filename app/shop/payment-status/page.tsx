@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { ShopHeader } from "@/components/shop";
 
 type OrderItem = {
   id: string;
@@ -94,19 +94,13 @@ export default function PaymentStatusPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-white/10 bg-slate-950/95">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <Link href="/shop" className="font-bebas text-3xl tracking-widest">
-            OP17 Status
-          </Link>
-          <Link
-            href="/shop"
-            className="text-sm uppercase tracking-[0.2em] text-slate-400 hover:text-gold"
-          >
-            Back to Shop
-          </Link>
-        </div>
-      </header>
+      <ShopHeader
+        variant="simple"
+        title="Status"
+        backHref="/shop"
+        backLabel="Back to Shop"
+        showLocaleSwitcher={false}
+      />
 
       <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
         <div>

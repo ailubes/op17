@@ -69,3 +69,59 @@ html:lang(uk) .outline-text {
 .delay-200 { animation-delay: 0.2s; }
 .delay-400 { animation-delay: 0.4s; }
 .delay-500 { animation-delay: 0.5s; }
+
+/* Print styles for admin order packing slips */
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Hide everything except the print content */
+  header,
+  nav,
+  .no-print,
+  button:not(.print\:block *),
+  a[href]:not(.print\:block *) {
+    display: none !important;
+  }
+
+  /* Ensure print content is visible */
+  .print\:block {
+    display: block !important;
+  }
+
+  /* Reset dark theme colors for printing */
+  .print\:block,
+  .print\:block * {
+    background: white !important;
+    color: black !important;
+    border-color: black !important;
+  }
+
+  /* Hide the main admin layout elements */
+  main > div:first-child,
+  section:first-of-type,
+  .grid > section:first-child {
+    display: none !important;
+  }
+
+  /* Only show the order details section with print content */
+  .grid > section:last-child {
+    display: block !important;
+    width: 100% !important;
+    border: none !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  /* Hide the regular order details content when printing */
+  .grid > section:last-child > h2,
+  .grid > section:last-child > div > div:not(.print\:block) {
+    display: none !important;
+  }
+}

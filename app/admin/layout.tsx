@@ -1,9 +1,11 @@
 ﻿import Link from "next/link";
 import type { ReactNode } from "react";
+import { ToastProvider } from "@/components/admin";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <ToastProvider>
+      <div className="min-h-screen bg-slate-950 text-white">
       <header className="border-b border-white/10 bg-slate-950/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <div className="flex items-center gap-4">
@@ -28,11 +30,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Link href="/admin/variants" className="hover:text-gold transition-colors">
               Variants
             </Link>
+            <Link href="/admin/promo-codes" className="hover:text-gold transition-colors">
+              Promo Codes
+            </Link>
           </nav>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
     </div>
+    </ToastProvider>
   );
 }
 

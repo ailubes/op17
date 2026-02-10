@@ -19,15 +19,65 @@ export const GET = async (request: Request) => {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      category: true,
-      collection: true,
-      variants: true,
-      media: { orderBy: { sortOrder: "asc" } },
-    },
-  });
+  const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search") || undefined;
+  const status = searchParams.get("status") || undefined;
+  const collectionId = searchParams.get("collectionId") || undefined;
+  const categoryId = searchParams.get("categoryId") || undefined;
+  const page = Math.max(1, Number(searchParams.get("page") || 1));
+  const limit = Math.min(50, Math.max(1, Number(searchParams.get("limit") || 20)));
+  const skip = (page - 1) * limit;
+
+  const where: any = {};
+
+  if (search) {
+    const searchLower = search.toLowerCase();
+    where.OR = [
+      { name: { contains: searchLower, mode: "insensitive" } },
+      { slug: { contains: searchLower, mode: "insensitive" } },
+      { description: { contains: searchLower, mode: "insensitive" } },
+    ];
+  }
+
+  if (status) {
+    switch (status) {
+      case "active":
+        where.isActive = true;
+        break;
+      case "inactive":
+        where.isActive = false;
+        break;
+      case "featured":
+        where.isFeatured = true;
+        break;
+    }
+  }
+
+  if (collectionId) {
+    where.collectionId = collectionId;
+  }
+
+  if (categoryId) {
+    where.categoryId = categoryId;
+  }
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where: Object.keys(where).length > 0 ? where : undefined,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      include: {
+        category: true,
+        collection: true,
+        variants: true,
+        media: { orderBy: { sortOrder: "asc" } },
+      },
+    }),
+    prisma.product.count({
+      where: Object.keys(where).length > 0 ? where : undefined,
+    }),
+  ]);
 
   const withUrls = products.map((product) => ({
     ...product,
@@ -37,7 +87,15 @@ export const GET = async (request: Request) => {
     })),
   }));
 
-  return NextResponse.json({ data: withUrls });
+  return NextResponse.json({
+    data: withUrls,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
 };
 
 export const POST = async (request: Request) => {

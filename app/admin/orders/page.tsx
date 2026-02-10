@@ -102,9 +102,27 @@ export default function AdminOrders() {
   const [refundReason, setRefundReason] = useState("");
   const [refundPaymentId, setRefundPaymentId] = useState("");
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const loadOrders = async () => {
     setLoading(true);
-    const url = statusFilter === "all" ? "/api/admin/orders" : `/api/admin/orders?status=${statusFilter}`;
+    const params = new URLSearchParams();
+    if (statusFilter !== "all") {
+      params.set("status", statusFilter);
+    }
+    if (debouncedSearch.trim()) {
+      params.set("search", debouncedSearch.trim());
+    }
+    const url = `/api/admin/orders${params.toString() ? `?${params.toString()}` : ""}`;
     const res = await fetch(url, { credentials: "include" });
     if (!res.ok) {
       setError("Failed to load orders.");
@@ -118,7 +136,7 @@ export default function AdminOrders() {
 
   useEffect(() => {
     loadOrders();
-  }, [statusFilter]);
+  }, [statusFilter, debouncedSearch]);
 
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) || null,
@@ -249,18 +267,6 @@ export default function AdminOrders() {
           <p className="text-slate-400">Track purchases, payments, and fulfillment.</p>
         </div>
         <div className="flex items-center gap-4">
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="bg-slate-900 border border-white/10 px-4 py-3 text-white"
-          >
-            <option value="all">All statuses</option>
-            {STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
           <Link
             href="/admin"
             className="text-sm uppercase tracking-[0.2em] text-slate-400 hover:text-gold"
@@ -268,6 +274,54 @@ export default function AdminOrders() {
             Back to Admin
           </Link>
         </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="relative flex-1 max-w-md">
+          <input
+            type="text"
+            placeholder="Search by order #, email, or name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-slate-900 border border-white/10 px-4 py-3 pl-10 text-white focus:outline-none focus:border-gold"
+          />
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+          className="bg-slate-900 border border-white/10 px-4 py-3 text-white"
+        >
+          <option value="all">All statuses</option>
+          {STATUSES.map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
       </div>
 
       {error && <p className="text-sm text-red-400">{error}</p>}
@@ -535,9 +589,130 @@ export default function AdminOrders() {
                   <p className="text-sm text-slate-400">No shipping address.</p>
                 )}
               </div>
+
+              <div className="pt-4 border-t border-white/10">
+                <button
+                  onClick={() => window.print()}
+                  className="w-full bg-slate-800 text-white uppercase tracking-[0.2em] text-xs py-3 hover:bg-slate-700 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Print Order / Packing Slip
+                </button>
+              </div>
+
+              {/* Print-only content */}
+              <div className="hidden print:block print:mt-8">
+                <PrintOrderView order={selectedOrder} />
+              </div>
             </div>
           )}
         </section>
+      </div>
+    </div>
+  );
+}
+
+function PrintOrderView({ order }: { order: Order }) {
+  return (
+    <div className="print:p-8">
+      <div className="border-b-2 border-black pb-4 mb-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold">OP17</h1>
+            <p className="text-sm text-gray-600">Ukrainian Thunder</p>
+          </div>
+          <div className="text-right">
+            <h2 className="text-2xl font-bold">PACKING SLIP</h2>
+            <p className="text-lg">Order #{order.orderNumber}</p>
+            <p className="text-sm text-gray-600">
+              {new Date(order.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-8 mb-6">
+        <div>
+          <h3 className="font-bold text-sm uppercase mb-2">Ship To:</h3>
+          {order.shippingAddress ? (
+            <div className="text-sm">
+              <p className="font-semibold">{order.shippingAddress.name}</p>
+              <p>{order.shippingAddress.street1}</p>
+              {order.shippingAddress.street2 && <p>{order.shippingAddress.street2}</p>}
+              <p>
+                {order.shippingAddress.city}
+                {order.shippingAddress.region ? `, ${order.shippingAddress.region}` : ""}
+                {order.shippingAddress.postalCode ? ` ${order.shippingAddress.postalCode}` : ""}
+              </p>
+              <p>{order.shippingAddress.country}</p>
+              {order.shippingAddress.novaPostOfficeName && (
+                <p className="mt-1 text-gray-600">Nova Post: {order.shippingAddress.novaPostOfficeName}</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600">No shipping address</p>
+          )}
+        </div>
+        <div>
+          <h3 className="font-bold text-sm uppercase mb-2">Contact:</h3>
+          <div className="text-sm">
+            <p>{order.email}</p>
+            {order.phone && <p>{order.phone}</p>}
+          </div>
+          <h3 className="font-bold text-sm uppercase mb-2 mt-4">Shipping Method:</h3>
+          <p className="text-sm">{order.shippingMethod}</p>
+          {order.shipments?.[0]?.trackingNumber && (
+            <>
+              <h3 className="font-bold text-sm uppercase mb-2 mt-4">Tracking:</h3>
+              <p className="text-sm">{order.shipments[0].trackingNumber}</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      <table className="w-full text-sm mb-6">
+        <thead>
+          <tr className="border-b-2 border-black">
+            <th className="text-left py-2">Item</th>
+            <th className="text-left py-2">Variant</th>
+            <th className="text-right py-2">Qty</th>
+            <th className="text-right py-2">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {order.items.map((item) => (
+            <tr key={item.id} className="border-b border-gray-300">
+              <td className="py-2">{item.productName}</td>
+              <td className="py-2 text-gray-600">{item.variantName || "—"}</td>
+              <td className="text-right py-2">{item.quantity}</td>
+              <td className="text-right py-2">€{item.unitPriceEur.toFixed(2)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="flex justify-end">
+        <div className="w-48">
+          <div className="flex justify-between py-1">
+            <span>Subtotal:</span>
+            <span>€{order.subtotalEur.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between py-1 border-b border-gray-300">
+            <span>Shipping:</span>
+            <span>€{(order.totalEur - order.subtotalEur).toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between py-2 font-bold text-lg">
+            <span>Total:</span>
+            <span>€{order.totalEur.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-12 pt-8 border-t border-gray-300 text-center text-sm text-gray-600">
+        <p>Thank you for your order!</p>
+        <p className="mt-1">www.op17.com</p>
       </div>
     </div>
   );
