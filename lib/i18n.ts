@@ -9,6 +9,7 @@ export const messages = {
         hobbies: "Hobbies",
         career: "Career",
         gallery: "Gallery",
+        contact: "Contact",
         shop: "Shop",
         shopNow: "Shop Now",
       },
@@ -247,6 +248,47 @@ export const messages = {
         marquee: "2X WORLD CHAMPION - MVP - 8-YEAR CAPTAIN -",
         clubName: "SIR SICOMA MONINI PERUGIA",
       },
+      contact: {
+        titleLead: "LET'S WORK",
+        titleHighlight: "TOGETHER",
+        intro: "Oleh Plotnytskyi is open to cooperation proposals with sports brands, volleyball clubs, and organizations worldwide. With over 15 years of professional experience and multiple championship titles, Oleh brings excellence, dedication, and a strong personal brand to every partnership.",
+        imageAlt: "Oleh Plotnytskyi in action",
+        availableForTitle: "Available For:",
+        availableFor: [
+          "Brand Partnerships",
+          "Sponsorship Deals",
+          "Media Collaborations",
+          "Club Transfers",
+          "Event Appearances",
+          "Training Camps",
+        ],
+        formTitle: "SEND A MESSAGE",
+        formSubtitle: "Fill out the form below and we'll get back to you within 24 hours.",
+        nameLabel: "Name",
+        namePlaceholder: "Your name",
+        emailLabel: "Email",
+        emailPlaceholder: "your@email.com",
+        companyLabel: "Company / Organization",
+        companyPlaceholder: "Company name (optional)",
+        typeLabel: "Type of Cooperation",
+        typePlaceholder: "Select cooperation type",
+        cooperationTypes: [
+          "Sponsorship",
+          "Club Transfer",
+          "Media Collaboration",
+          "Event Appearance",
+          "Training Camp",
+          "Product Collaboration",
+          "Other",
+        ],
+        messageLabel: "Your Message",
+        messagePlaceholder: "Tell us about your proposal...",
+        submitButton: "SEND MESSAGE",
+        sendingButton: "SENDING...",
+        successTitle: "MESSAGE SENT!",
+        successMessage: "Thank you for reaching out. We'll get back to you within 24 hours.",
+        errorMessage: "Something went wrong. Please try again.",
+      },
       footer: {
         tagline:
           "The official digital home of Oleh Plotnytskyi. Celebrating excellence in volleyball and the indomitable spirit of the Ukrainian people.",
@@ -366,6 +408,188 @@ export const messages = {
       official: "OP17 Official",
       rights: "All rights reserved.",
     },
+    aboutPage: {
+      meta: {
+        title: "About Oleh Plotnytskyi | Ukrainian Thunder",
+        description: "Discover the story of Oleh Plotnytskyi - Ukraine's volleyball captain, 2x World Champion, and one of the most formidable outside hitters in world volleyball.",
+      },
+      hero: {
+        tagline: "8-Year Captain • 2x World Champion",
+        title: "OLEH PLOTNYTSKYI",
+        subtitle: "The Beast From Ukraine",
+      },
+      earlyLife: {
+        title: "Early Life & Background",
+        paragraph1: "Born on June 5, 1997, in Letkivka village, Vinnytsia Oblast, Ukraine, Oleh Plotnytskyi came from a family with deep volleyball roots. Both parents were passionate volleyball players, and young Oleh began training at age 6 under his father's guidance.",
+        paragraph2: "Growing up in the Ukrainian countryside, he developed not just technical skills but also the discipline and work ethic that would define his career. The volleyball heritage in his blood instilled a competitive fire that burns to this day.",
+      },
+      career: {
+        title: "Career Journey",
+        paragraph1: "Plotnytskyi's professional journey took him from Lokomotyv Kharkiv in Ukraine to the heights of Italian volleyball. In 2017, he made his national team debut and transferred to Vero Volley Monza, entering the world's toughest league.",
+        paragraph2: "Since 2019, he has been a cornerstone of Sir Sicoma Monini Perugia, winning multiple titles including 2 Club World Championships, 5 Supercoppa Italiana titles, and being named 2023 Club World Championship MVP.",
+      },
+      captaincy: {
+        title: "National Team Captaincy",
+        paragraph1: "From 2018 to 2025, Plotnytskyi served as captain of the Ukraine national team at just 21 years old. Under his leadership, Ukraine achieved historic results including 7th place at the 2022 World Championship and victory in the 2024 CEV European Golden League.",
+        paragraph2: "In March 2025, he announced his retirement from the national team after 8 years of dedicated service, leaving behind a legacy of inspiration for the Ukrainian people.",
+      },
+      values: {
+        title: "Personal Values",
+        paragraph1: "Known as 'The Beast' for his explosive power and devastating left-handed serve, Oleh embodies resilience, dedication, and the fighting spirit of Ukraine. His journey from a small village to world champion serves as inspiration for aspiring athletes everywhere.",
+        quote: "Family gives me strength. When I step on the court, I carry their love with me. Every point, every victory - it's for them.",
+      },
+      stats: {
+        height: { label: "Height", value: "1.95m" },
+        spike: { label: "Spike Reach", value: "345cm" },
+        titles: { label: "Major Titles", value: "11+" },
+        years: { label: "Pro Years", value: "15+" },
+      },
+      cta: {
+        title: "Work With Oleh",
+        subtitle: "Open to brand partnerships, sponsorships, and collaborations",
+        button: "Get In Touch",
+      },
+    },
+    careerPage: {
+      meta: {
+        title: "Career Highlights | Oleh Plotnytskyi",
+        description: "Explore Oleh Plotnytskyi's legendary career - 11+ major titles, 2x World Champion, MVP awards, and 8 years as Ukraine national team captain.",
+      },
+      hero: {
+        title: "CAREER IN NUMBERS",
+        subtitle: "A Legacy of Excellence",
+      },
+      titles: {
+        sectionTitle: "Major Titles",
+        items: [
+          { year: "2023, 2024", title: "Club World Championship", count: "2x" },
+          { year: "2020-2024", title: "Supercoppa Italiana", count: "5x" },
+          { year: "2022, 2024", title: "Coppa Italia", count: "2x" },
+          { year: "2024", title: "Italian Scudetto", count: "1x" },
+          { year: "2024", title: "CEV European Golden League", count: "1x" },
+        ],
+      },
+      clubCareer: {
+        sectionTitle: "Club Career",
+        timeline: [
+          { period: "2016-2017", club: "Lokomotyv Kharkiv", country: "Ukraine", description: "Professional debut and development in Ukrainian Super League" },
+          { period: "2017-2019", club: "Vero Volley Monza", country: "Italy", description: "First Italian experience, establishing in Serie A" },
+          { period: "2019-Present", club: "Sir Sicoma Monini Perugia", country: "Italy", description: "Joining the 'Big Four', winning multiple titles" },
+        ],
+      },
+      nationalTeam: {
+        sectionTitle: "National Team Career",
+        debut: "Debut: May 24, 2017",
+        captaincy: "Captain: 2018-2025",
+        achievements: [
+          "Historic 7th place at 2022 World Championship",
+          "2024 CEV European Golden League Champions",
+          "Best Server at 2022 World Championship",
+          "8 years of dedicated service as captain",
+        ],
+      },
+      awards: {
+        sectionTitle: "Individual Awards",
+        items: [
+          { year: "2023", award: "Club World Championship MVP" },
+          { year: "2022", award: "World Championship Best Server" },
+          { year: "2024", award: "Coppa Italia MVP" },
+          { year: "2016", award: "U20 European Championship MVP" },
+          { year: "2016", award: "U20 European Championship Best Outside Spiker" },
+        ],
+      },
+      stats: {
+        sectionTitle: "Career Statistics",
+        matches: { label: "Pro Matches", value: "300+" },
+        points: { label: "Points Scored", value: "5000+" },
+        aces: { label: "Service Aces", value: "800+" },
+        blocks: { label: "Blocks", value: "400+" },
+      },
+    },
+    fanZonePage: {
+      meta: {
+        title: "Fan Zone | Oleh Plotnytskyi",
+        description: "Join the Ukrainian Thunder community. Photo gallery, social media, fan club info, and exclusive updates.",
+      },
+      hero: {
+        title: "JOIN THE THUNDER",
+        subtitle: "Be Part of the Community",
+      },
+      gallery: {
+        title: "Photo Gallery",
+        viewMore: "View More Photos",
+      },
+      social: {
+        title: "Follow Oleh",
+        subtitle: "Stay connected across all platforms",
+        instagram: "@oleh_plotnytskyi",
+        volleybox: "Volleybox Profile",
+        wikipedia: "Wikipedia",
+      },
+      fanClub: {
+        title: "Fan Club",
+        subtitle: "Join the official fan community",
+        description: "Connect with fans worldwide, get exclusive updates, and be the first to know about new merchandise drops and appearances.",
+        comingSoon: "Official fan club coming soon!",
+      },
+      newsletter: {
+        title: "Newsletter",
+        subtitle: "Get Thunder Updates",
+        description: "Subscribe for exclusive content, behind-the-scenes photos, and early access to merchandise.",
+        placeholder: "Your email address",
+        button: "Subscribe",
+        success: "Thanks for subscribing!",
+      },
+      shop: {
+        title: "Official Merch",
+        subtitle: "Rep the Thunder",
+        cta: "Shop Now",
+      },
+    },
+    privacyPage: {
+      meta: {
+        title: "Privacy Policy | OP17",
+        description: "OP17 privacy policy - how we collect, use, and protect your personal information.",
+      },
+      header: {
+        title: "Privacy Policy",
+        lastUpdated: "Last updated: February 2025",
+      },
+      sections: [
+        {
+          title: "Introduction",
+          content: "This Privacy Policy describes how OP17 ('we', 'us', or 'our') collects, uses, and protects your personal information when you visit our website.",
+        },
+        {
+          title: "Information We Collect",
+          content: "We collect information you provide directly to us, such as when you create an account, make a purchase, or contact us. This may include your name, email address, shipping address, and payment information.",
+        },
+        {
+          title: "How We Use Your Information",
+          content: "We use the information we collect to process your orders, communicate with you, improve our services, and send you marketing communications (with your consent).",
+        },
+        {
+          title: "Data Protection",
+          content: "We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction.",
+        },
+        {
+          title: "Your Rights",
+          content: "You have the right to access, correct, or delete your personal information. You may also object to or restrict certain processing of your data. Contact us at privacy@op17.fit for any privacy-related requests.",
+        },
+        {
+          title: "Cookies",
+          content: "We use cookies to enhance your browsing experience. You can set your browser to refuse cookies, but some features of our site may not function properly.",
+        },
+        {
+          title: "Third-Party Services",
+          content: "We may use third-party services (payment processors, shipping providers) that have access to your personal information only to perform specific tasks on our behalf.",
+        },
+      ],
+      contact: {
+        title: "Contact Us",
+        content: "If you have any questions about this Privacy Policy, please contact us at privacy@op17.fit.",
+      },
+    },
   },
   uk: {
     home: {
@@ -375,6 +599,7 @@ export const messages = {
         hobbies: "Хобі",
         career: "Кар'єра",
         gallery: "Галерея",
+        contact: "Контакти",
         shop: "Магазин",
         shopNow: "До магазину",
       },
@@ -613,6 +838,47 @@ export const messages = {
         marquee: "2X ЧЕМПІОН СВІТУ - MVP - 8 РОКІВ КАПІТАН НАЦІОНАЛЬНОЇ ЗБІРНОЇ -",
         clubName: "SIR SICOMA MONINI PERUGIA",
       },
+      contact: {
+        titleLead: "СПІВПРАЦЯ",
+        titleHighlight: "ТА ПАРТНЕРСТВО",
+        intro: "Олег Плотницький відкритий до пропозицій щодо співпраці зі спортивними брендами, волейбольними клубами та організаціями по всьому світу. З понад 15 роками професійного досвіду та численними чемпіонськими титулами, Олег приносить до кожного партнерства досконалість, відданість та сильний особистий бренд.",
+        imageAlt: "Олег Плотницький в дії",
+        availableForTitle: "Доступний для:",
+        availableFor: [
+          "Партнерства з брендами",
+          "Спонсорських угод",
+          "Медіа-колаборацій",
+          "Трансферів у клуби",
+          "Участі в заходах",
+          "Тренувальних таборів",
+        ],
+        formTitle: "НАДІСЛАТИ ПОВІДОМЛЕННЯ",
+        formSubtitle: "Заповніть форму нижче, і ми відповімо вам протягом 24 годин.",
+        nameLabel: "Ім'я",
+        namePlaceholder: "Ваше ім'я",
+        emailLabel: "Email",
+        emailPlaceholder: "your@email.com",
+        companyLabel: "Компанія / Організація",
+        companyPlaceholder: "Назва компанії (необов'язково)",
+        typeLabel: "Тип співпраці",
+        typePlaceholder: "Оберіть тип співпраці",
+        cooperationTypes: [
+          "Спонсорство",
+          "Трансфер у клуб",
+          "Медіа-колаборація",
+          "Участь у заході",
+          "Тренувальний табір",
+          "Колаборація з продуктом",
+          "Інше",
+        ],
+        messageLabel: "Ваше повідомлення",
+        messagePlaceholder: "Розкажіть про вашу пропозицію...",
+        submitButton: "НАДІСЛАТИ ПОВІДОМЛЕННЯ",
+        sendingButton: "НАДСИЛАЄМО...",
+        successTitle: "ПОВІДОМЛЕННЯ НАДІСЛАНО!",
+        successMessage: "Дякуємо за звернення. Ми відповімо вам протягом 24 годин.",
+        errorMessage: "Щось пішло не так. Будь ласка, спробуйте ще раз.",
+      },
       footer: {
         tagline:
           "Офіційний цифровий дім Олега Плотницького. Відзначаємо майстерність у волейболі та незламний дух українського народу.",
@@ -732,6 +998,188 @@ export const messages = {
       official: "OP17 Офіційно",
       rights: "Всі права захищені.",
     },
+    aboutPage: {
+      meta: {
+        title: "Про Олега Плотницького | Український грім",
+        description: "Дізнайтесь історію Олега Плотницького - капітана збірної України, дворазового чемпіона світу та одного з найсильніших догравальників світового волейболу.",
+      },
+      hero: {
+        tagline: "8 років капітан • 2x чемпіон світу",
+        title: "ОЛЕГ ПЛОТНИЦЬКИЙ",
+        subtitle: "Звір з України",
+      },
+      earlyLife: {
+        title: "Раннє життя та походження",
+        paragraph1: "Народився 5 червня 1997 року в селі Летківка, Вінницька область, Україна. Олег Плотницький походить із сім'ї з глибокими волейбольними коріннями. Обоє батьків були пристрасними волейболістами, і юний Олег почав тренуватися у 6 років під керівництвом батька.",
+        paragraph2: "Виростаючи в українській глибинці, він розвинув не лише технічні навички, але й дисципліну та трудову етику, які визначили його кар'єру. Волейбольна спадщина в його крові заклала бойовий характер, який горить і досі.",
+      },
+      career: {
+        title: "Кар'єрний шлях",
+        paragraph1: "Професійний шлях Плотницького проліг від харківського Локомотива до вершин італійського волейболу. У 2017 році він дебютував у збірній та перейшов до Vero Volley Monza, стартувавши в найсильнішій лізі світу.",
+        paragraph2: "З 2019 року він є ключовим гравцем Sir Sicoma Monini Perugia, вигравши численні титули, включаючи 2 Клубних чемпіонати світу, 5 Supercoppa Italiana та звання MVP Клубного чемпіонату світу 2023.",
+      },
+      captaincy: {
+        title: "Капітанство збірної",
+        paragraph1: "З 2018 по 2025 рік Плотницький був капітаном збірної України у всього 21 рік. Під його керівництвом Україна досягла історичних результатів, включаючи 7-е місце на ЧС-2022 та перемогу в CEV European Golden League 2024.",
+        paragraph2: "У березні 2025 року він оголосив про завершення виступів за збірну після 8 років служби, залишивши спадщину натхнення для українського народу.",
+      },
+      values: {
+        title: "Особисті цінності",
+        paragraph1: "Відомий як 'Звір' за вибухову силу та нищівну ліворуку подачу, Олег втілює стійкість, відданість та бойовий дух України. Його шлях від малого села до чемпіона світу слугує натхненням для спортсменів-початківців.",
+        quote: "Сім'я дає мені силу. Коли виходжу на майданчик, я несу їхню любов із собою. Кожне очко, кожна перемога - для них.",
+      },
+      stats: {
+        height: { label: "Зріст", value: "1.95 м" },
+        spike: { label: "Дотяг", value: "345 см" },
+        titles: { label: "Титули", value: "11+" },
+        years: { label: "Років у спорті", value: "15+" },
+      },
+      cta: {
+        title: "Співпраця з Олегом",
+        subtitle: "Відкритий до партнерств з брендами, спонсорства та колаборацій",
+        button: "Зв'язатись",
+      },
+    },
+    careerPage: {
+      meta: {
+        title: "Кар'єрні досягнення | Олег Плотницький",
+        description: "Досліджуйте легендарну кар'єру Олега Плотницького - 11+ великих титулів, 2-разовий чемпіон світу, нагороди MVP та 8 років капітана збірної України.",
+      },
+      hero: {
+        title: "КАР'ЄРА В ЦИФРАХ",
+        subtitle: "Спадщина досконалості",
+      },
+      titles: {
+        sectionTitle: "Великі титули",
+        items: [
+          { year: "2023, 2024", title: "Клубний чемпіонат світу", count: "2x" },
+          { year: "2020-2024", title: "Supercoppa Italiana", count: "5x" },
+          { year: "2022, 2024", title: "Coppa Italia", count: "2x" },
+          { year: "2024", title: "Італійське Скудетто", count: "1x" },
+          { year: "2024", title: "CEV European Golden League", count: "1x" },
+        ],
+      },
+      clubCareer: {
+        sectionTitle: "Клубна кар'єра",
+        timeline: [
+          { period: "2016-2017", club: "Локомотив Харків", country: "Україна", description: "Професійний дебют та розвиток в українській Суперлізі" },
+          { period: "2017-2019", club: "Vero Volley Monza", country: "Італія", description: "Перший італійський досвід, закріплення в Серії А" },
+          { period: "2019-Зараз", club: "Sir Sicoma Monini Perugia", country: "Італія", description: "Приєднання до 'великої четвірки', численні титули" },
+        ],
+      },
+      nationalTeam: {
+        sectionTitle: "Кар'єра у збірній",
+        debut: "Дебют: 24 травня 2017",
+        captaincy: "Капітан: 2018-2025",
+        achievements: [
+          "Історичне 7-е місце на ЧС-2022",
+          "Перемога в CEV European Golden League 2024",
+          "Найкращий подаючий ЧС-2022",
+          "8 років відданої служби капітаном",
+        ],
+      },
+      awards: {
+        sectionTitle: "Індивідуальні нагороди",
+        items: [
+          { year: "2023", award: "MVP Клубного чемпіонату світу" },
+          { year: "2022", award: "Найкращий подаючий ЧС" },
+          { year: "2024", award: "MVP Coppa Italia" },
+          { year: "2016", award: "MVP чемпіонату Європи U20" },
+          { year: "2016", award: "Найкращий догравальник Європи U20" },
+        ],
+      },
+      stats: {
+        sectionTitle: "Кар'єрна статистика",
+        matches: { label: "Професійних матчів", value: "300+" },
+        points: { label: "Очок", value: "5000+" },
+        aces: { label: "Ейсів", value: "800+" },
+        blocks: { label: "Блоків", value: "400+" },
+      },
+    },
+    fanZonePage: {
+      meta: {
+        title: "Фан-зона | Олег Плотницький",
+        description: "Приєднуйтесь до спільноти українського грому. Фотогалерея, соціальні мережі, інформація про фан-клуб та ексклюзивні оновлення.",
+      },
+      hero: {
+        title: "ПРИЄДНУЙТЕСЬ ДО ГРОМУ",
+        subtitle: "Будьте частиною спільноти",
+      },
+      gallery: {
+        title: "Фотогалерея",
+        viewMore: "Більше фото",
+      },
+      social: {
+        title: "Слідкуйте за Олегом",
+        subtitle: "Залишайтесь на зв'язку на всіх платформах",
+        instagram: "@oleh_plotnytskyi",
+        volleybox: "Профіль Volleybox",
+        wikipedia: "Вікіпедія",
+      },
+      fanClub: {
+        title: "Фан-клуб",
+        subtitle: "Приєднуйтесь до офіційної фан-спільноти",
+        description: "Спілкуйтесь із фанатами з усього світу, отримуйте ексклюзивні оновлення та першими дізнавайтесь про нові дропи мерчу та появи.",
+        comingSoon: "Офіційний фан-клуб незабаром!",
+      },
+      newsletter: {
+        title: "Розсилка",
+        subtitle: "Отримуйте оновлення грому",
+        description: "Підпишіться на ексклюзивний контент, фото з-за лаштунків та ранній доступ до мерчу.",
+        placeholder: "Ваша email-адреса",
+        button: "Підписатись",
+        success: "Дякуємо за підписку!",
+      },
+      shop: {
+        title: "Офіційний мерч",
+        subtitle: "Підтримуйте грім",
+        cta: "До магазину",
+      },
+    },
+    privacyPage: {
+      meta: {
+        title: "Політика конфіденційності | OP17",
+        description: "Політика конфіденційності OP17 - як ми збираємо, використовуємо та захищаємо вашу особисту інформацію.",
+      },
+      header: {
+        title: "Політика конфіденційності",
+        lastUpdated: "Останнє оновлення: лютий 2025",
+      },
+      sections: [
+        {
+          title: "Вступ",
+          content: "Ця Політика конфіденційності описує, як OP17 ('ми', 'нас' або 'наш') збирає, використовує та захищає вашу особисту інформацію під час відвідування нашого веб-сайту.",
+        },
+        {
+          title: "Інформація, яку ми збираємо",
+          content: "Ми збираємо інформацію, яку ви безпосередньо надаєте нам, наприклад, при створенні облікового запису, здійсненні покупки або зверненні до нас. Це може включати ваше ім'я, email-адресу, адресу доставки та платіжну інформацію.",
+        },
+        {
+          title: "Як ми використовуємо вашу інформацію",
+          content: "Ми використовуємо зібрану інформацію для обробки замовлень, спілкування з вами, покращення наших послуг та надсилання маркетингових повідомлень (за вашої згоди).",
+        },
+        {
+          title: "Захист даних",
+          content: "Ми впроваджуємо відповідні технічні та організаційні заходи для захисту ваших персональних даних від несанкціонованого доступу, зміни, розкриття або знищення.",
+        },
+        {
+          title: "Ваші права",
+          content: "Ви маєте право на доступ, виправлення або видалення вашої особистої інформації. Ви також можете заперечити проти або обмежити певну обробку ваших даних. Зв'яжіться з нами за privacy@op17.fit для будь-яких запитів щодо конфіденційності.",
+        },
+        {
+          title: "Cookies",
+          content: "Ми використовуємо cookies для покращення вашого досвіду перегляду. Ви можете налаштувати браузер на відмову від cookies, але деякі функції сайту можуть працювати некоректно.",
+        },
+        {
+          title: "Сторонні сервіси",
+          content: "Ми можемо використовувати сторонні сервіси (платіжні системи, служби доставки), які мають доступ до вашої особистої інформації лише для виконання конкретних завдань від нашого імені.",
+        },
+      ],
+      contact: {
+        title: "Контакти",
+        content: "Якщо у вас є питання щодо цієї Політики конфіденційності, будь ласка, зв'яжіться з нами за адресою privacy@op17.fit.",
+      },
+    },
   },
   it: {
     home: {
@@ -741,6 +1189,7 @@ export const messages = {
         hobbies: "Hobby",
         career: "Carriera",
         gallery: "Galleria",
+        contact: "Contatti",
         shop: "Shop",
         shopNow: "Acquista ora",
       },
@@ -979,6 +1428,47 @@ export const messages = {
         marquee: "2X CAMPIONE DEL MONDO - MVP - CAPITANO PER 8 ANNI -",
         clubName: "SIR SICOMA MONINI PERUGIA",
       },
+      contact: {
+        titleLead: "COLLABORIAMO",
+        titleHighlight: "INSIEME",
+        intro: "Oleh Plotnytskyi è aperto a proposte di collaborazione con marchi sportivi, club di pallavolo e organizzazioni in tutto il mondo. Con oltre 15 anni di esperienza professionale e numerosi titoli di campionato, Oleh porta eccellenza, dedizione e un forte marchio personale a ogni partnership.",
+        imageAlt: "Oleh Plotnytskyi in azione",
+        availableForTitle: "Disponibile per:",
+        availableFor: [
+          "Partnership con marchi",
+          "Accordi di sponsorizzazione",
+          "Collaborazioni mediatiche",
+          "Trasferimenti di club",
+          "Partecipazioni ad eventi",
+          "Campi di allenamento",
+        ],
+        formTitle: "INVIA UN MESSAGGIO",
+        formSubtitle: "Compila il modulo sottostante e ti risponderemo entro 24 ore.",
+        nameLabel: "Nome",
+        namePlaceholder: "Il tuo nome",
+        emailLabel: "Email",
+        emailPlaceholder: "tua@email.com",
+        companyLabel: "Azienda / Organizzazione",
+        companyPlaceholder: "Nome azienda (opzionale)",
+        typeLabel: "Tipo di collaborazione",
+        typePlaceholder: "Seleziona il tipo di collaborazione",
+        cooperationTypes: [
+          "Sponsorizzazione",
+          "Trasferimento di club",
+          "Collaborazione mediatica",
+          "Partecipazione ad eventi",
+          "Campo di allenamento",
+          "Collaborazione prodotto",
+          "Altro",
+        ],
+        messageLabel: "Il tuo messaggio",
+        messagePlaceholder: "Parlaci della tua proposta...",
+        submitButton: "INVIA MESSAGGIO",
+        sendingButton: "INVIO IN CORSO...",
+        successTitle: "MESSAGGIO INVIATO!",
+        successMessage: "Grazie per averci contattato. Ti risponderemo entro 24 ore.",
+        errorMessage: "Qualcosa è andato storto. Riprova.",
+      },
       footer: {
         tagline:
           "La casa digitale ufficiale di Oleh Plotnytskyi. Celebriamo l'eccellenza nella pallavolo e lo spirito indomito del popolo ucraino.",
@@ -1098,6 +1588,188 @@ export const messages = {
       official: "OP17 Ufficiale",
       rights: "Tutti i diritti riservati.",
     },
+    aboutPage: {
+      meta: {
+        title: "Su Oleh Plotnytskyi | Tuono Ucraino",
+        description: "Scopri la storia di Oleh Plotnytskyi - capitano della nazionale ucraina, 2x campione del mondo e uno dei migliori schiacciatori del volley mondiale.",
+      },
+      hero: {
+        tagline: "8 anni da capitano • 2x campione del mondo",
+        title: "OLEH PLOTNYTSKYI",
+        subtitle: "La Bestia dall'Ucraina",
+      },
+      earlyLife: {
+        title: "Primi anni e origini",
+        paragraph1: "Nato il 5 giugno 1997 nel villaggio di Letkivka, oblast' di Vinnytsia, Ucraina, Oleh Plotnytskyi proviene da una famiglia con radici profonde nella pallavolo. Entrambi i genitori erano appassionati giocatori di pallavolo e il giovane Oleh iniziò ad allenarsi a 6 anni sotto la guida del padre.",
+        paragraph2: "Crescendo nella campagna ucraina, ha sviluppato non solo abilità tecniche ma anche disciplina e etica del lavoro che avrebbero definito la sua carriera. L'eredità pallavolistica nel suo sangue ha instillato un fuoco competitivo che brucia ancora oggi.",
+      },
+      career: {
+        title: "Percorso di carriera",
+        paragraph1: "Il viaggio professionale di Plotnytskyi lo ha portato dal Lokomotyv Kharkiv in Ucraina alle vette della pallavolo italiana. Nel 2017 ha fatto il suo debutto in nazionale ed è passato al Vero Volley Monza, entrando nel campionato più duro del mondo.",
+        paragraph2: "Dal 2019 è una colonna del Sir Sicoma Monini Perugia, vincendo molti titoli tra cui 2 Club World Championship, 5 Supercoppa Italiana e il titolo di MVP del Club World Championship 2023.",
+      },
+      captaincy: {
+        title: "Capitanato della nazionale",
+        paragraph1: "Dal 2018 al 2025 Plotnytskyi ha servito come capitano della nazionale ucraina a soli 21 anni. Sotto la sua leadership, l'Ucraina ha raggiunto risultati storici tra cui il 7° posto al Mondiale 2022 e la vittoria nella CEV European Golden League 2024.",
+        paragraph2: "Nel marzo 2025 ha annunciato il suo ritiro dalla nazionale dopo 8 anni di servizio dedicato, lasciando un'eredità di ispirazione per il popolo ucraino.",
+      },
+      values: {
+        title: "Valori personali",
+        paragraph1: "Conosciuto come 'La Bestia' per la sua potenza esplosiva e la devastante battuta mancina, Oleh incarna resilienza, dedizione e lo spirito combattivo dell'Ucraina. Il suo viaggio da un piccolo villaggio a campione del mondo serve da ispirazione per gli atleti aspiranti ovunque.",
+        quote: "La famiglia mi dà forza. Quando scendo in campo porto con me il loro amore. Ogni punto, ogni vittoria - è per loro.",
+      },
+      stats: {
+        height: { label: "Altezza", value: "1.95m" },
+        spike: { label: "Elevazione", value: "345cm" },
+        titles: { label: "Titoli principali", value: "11+" },
+        years: { label: "Anni da professionista", value: "15+" },
+      },
+      cta: {
+        title: "Lavora con Oleh",
+        subtitle: "Aperto a partnership con brand, sponsorizzazioni e collaborazioni",
+        button: "Contattaci",
+      },
+    },
+    careerPage: {
+      meta: {
+        title: "Momenti di carriera | Oleh Plotnytskyi",
+        description: "Esplora la leggendaria carriera di Oleh Plotnytskyi - 11+ titoli principali, 2x campione del mondo, premi MVP e 8 anni da capitano della nazionale ucraina.",
+      },
+      hero: {
+        title: "CARRIERA IN NUMERI",
+        subtitle: "Un'eredità di eccellenza",
+      },
+      titles: {
+        sectionTitle: "Titoli principali",
+        items: [
+          { year: "2023, 2024", title: "Club World Championship", count: "2x" },
+          { year: "2020-2024", title: "Supercoppa Italiana", count: "5x" },
+          { year: "2022, 2024", title: "Coppa Italia", count: "2x" },
+          { year: "2024", title: "Scudetto italiano", count: "1x" },
+          { year: "2024", title: "CEV European Golden League", count: "1x" },
+        ],
+      },
+      clubCareer: {
+        sectionTitle: "Carriera di club",
+        timeline: [
+          { period: "2016-2017", club: "Lokomotyv Kharkiv", country: "Ucraina", description: "Debutto professionale e sviluppo nella Super League ucraina" },
+          { period: "2017-2019", club: "Vero Volley Monza", country: "Italia", description: "Prima esperienza italiana, affermazione in Serie A" },
+          { period: "2019-Presente", club: "Sir Sicoma Monini Perugia", country: "Italia", description: "Unione alle 'Big Four', vittoria di molti titoli" },
+        ],
+      },
+      nationalTeam: {
+        sectionTitle: "Carriera in nazionale",
+        debut: "Debutto: 24 maggio 2017",
+        captaincy: "Capitano: 2018-2025",
+        achievements: [
+          "Storico 7° posto al Mondiale 2022",
+          "Campioni CEV European Golden League 2024",
+          "Best Server al Mondiale 2022",
+          "8 anni di servizio dedicato come capitano",
+        ],
+      },
+      awards: {
+        sectionTitle: "Premi individuali",
+        items: [
+          { year: "2023", award: "MVP Club World Championship" },
+          { year: "2022", award: "Best Server Mondiale" },
+          { year: "2024", award: "MVP Coppa Italia" },
+          { year: "2016", award: "MVP Europeo U20" },
+          { year: "2016", award: "Best Outside Spiker Europeo U20" },
+        ],
+      },
+      stats: {
+        sectionTitle: "Statistiche di carriera",
+        matches: { label: "Partite da professionista", value: "300+" },
+        points: { label: "Punti segnati", value: "5000+" },
+        aces: { label: "Ace di servizio", value: "800+" },
+        blocks: { label: "Muri", value: "400+" },
+      },
+    },
+    fanZonePage: {
+      meta: {
+        title: "Fan zone | Oleh Plotnytskyi",
+        description: "Unisciti alla comunità del Tuono Ucraino. Galleria foto, social media, info fan club e aggiornamenti esclusivi.",
+      },
+      hero: {
+        title: "UNISCITI AL TUONO",
+        subtitle: "Fai parte della community",
+      },
+      gallery: {
+        title: "Galleria foto",
+        viewMore: "Vedi altre foto",
+      },
+      social: {
+        title: "Segui Oleh",
+        subtitle: "Resta connesso su tutte le piattaforme",
+        instagram: "@oleh_plotnytskyi",
+        volleybox: "Profilo Volleybox",
+        wikipedia: "Wikipedia",
+      },
+      fanClub: {
+        title: "Fan club",
+        subtitle: "Unisciti alla community ufficiale",
+        description: "Connettiti con fan da tutto il mondo, ricevi aggiornamenti esclusivi e sii il primo a sapere di nuovi merchandise e apparizioni.",
+        comingSoon: "Fan club ufficiale in arrivo presto!",
+      },
+      newsletter: {
+        title: "Newsletter",
+        subtitle: "Ricevi aggiornamenti sul Tuono",
+        description: "Iscriviti per contenuti esclusivi, foto dietro le quinte e accesso anticipato al merchandise.",
+        placeholder: "Il tuo indirizzo email",
+        button: "Iscriviti",
+        success: "Grazie per l'iscrizione!",
+      },
+      shop: {
+        title: "Merch ufficiale",
+        subtitle: "Indossa il Tuono",
+        cta: "Acquista ora",
+      },
+    },
+    privacyPage: {
+      meta: {
+        title: "Privacy policy | OP17",
+        description: "Privacy policy OP17 - come raccogliamo, usiamo e proteggiamo le tue informazioni personali.",
+      },
+      header: {
+        title: "Privacy policy",
+        lastUpdated: "Ultimo aggiornamento: febbraio 2025",
+      },
+      sections: [
+        {
+          title: "Introduzione",
+          content: "Questa Privacy Policy descrive come OP17 ('noi', 'ci' o 'nostro') raccoglie, usa e protegge le tue informazioni personali quando visiti il nostro sito web.",
+        },
+        {
+          title: "Informazioni che raccogliamo",
+          content: "Raccogliamo informazioni che ci fornisci direttamente, come quando crei un account, effettui un acquisto o ci contatti. Questo può includere il tuo nome, indirizzo email, indirizzo di spedizione e informazioni di pagamento.",
+        },
+        {
+          title: "Come usiamo le tue informazioni",
+          content: "Usiamo le informazioni raccolte per elaborare i tuoi ordini, comunicare con te, migliorare i nostri servizi e inviarti comunicazioni di marketing (con il tuo consenso).",
+        },
+        {
+          title: "Protezione dati",
+          content: "Implementiamo misure tecniche e organizzative appropriate per proteggere i tuoi dati personali da accessi non autorizzati, alterazioni, divulgazioni o distruzioni.",
+        },
+        {
+          title: "I tuoi diritti",
+          content: "Hai il diritto di accedere, correggere o cancellare le tue informazioni personali. Puoi anche opporti o limitare determinati trattamenti dei tuoi dati. Contattaci a privacy@op17.fit per qualsiasi richiesta relativa alla privacy.",
+        },
+        {
+          title: "Cookie",
+          content: "Usiamo cookie per migliorare la tua esperienza di navigazione. Puoi configurare il tuo browser per rifiutare i cookie, ma alcune funzionalità del sito potrebbero non funzionare correttamente.",
+        },
+        {
+          title: "Servizi di terze parti",
+          content: "Potremmo usare servizi di terze parti (processori di pagamento, corrieri) che hanno accesso alle tue informazioni personali solo per eseguire compiti specifici per nostro conto.",
+        },
+      ],
+      contact: {
+        title: "Contattaci",
+        content: "Se hai domande su questa Privacy Policy, contattaci a privacy@op17.fit.",
+      },
+    },
   },
 } as const;
 
@@ -1110,7 +1782,8 @@ type DeepString<T> = T extends string
       : T;
 
 export type HomeMessages = DeepString<typeof messages.en.home>;
+export type Messages = DeepString<typeof messages.en>;
 
-export const getMessages = (locale: AppLocale) => {
+export const getMessages = (locale: AppLocale): Messages => {
   return messages[locale] || messages.en;
 };
