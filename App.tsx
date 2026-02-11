@@ -14,6 +14,7 @@ import { Gallery } from "./components/Gallery";
 import { Videos } from "./components/Videos";
 import { Hobbies } from "./components/Hobbies";
 import { Family } from "./components/Family";
+import { Contact } from "./components/Contact";
 import { getMessages } from "@/lib/i18n";
 import { getClientLocale, type AppLocale } from "@/lib/locale";
 
@@ -61,6 +62,7 @@ function App({ initialLocale = "en" }: AppProps) {
         <Gallery copy={copy.gallery} />
         <Videos copy={copy.videos} />
         <ShopPreview copy={copy.shopPreview} />
+        <Contact copy={copy.contact} />
         <TrophyBanner copy={copy.trophy} />
       </main>
       <Footer copy={copy.footer} />
